@@ -844,7 +844,7 @@ def Factory():
                     
                     if setting._FORCESTOPING.is_set():
                         break
-            case "[简易]15波火材料无尽探险":
+            case "15波火材料":
                 counter = 0
                 in_game_counter = 0
                 start_time = time.time()
@@ -868,21 +868,41 @@ def Factory():
                             logger.info("已完成目标小局, 撤离")
                             Press(CheckIf(scn, "撤离"))
                             Sleep(2)
-                            break
-                    
+                    if Press(CheckIf(scn, "再次进行")):
+                        counter+=1
+                        cost_time = time.time()-start_time
+                        total_time = total_time + cost_time
+                        logger.info(f"第{counter}次完成.\n本次用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.", extra={"summary": True})
+                        start_time = time.time()
+                        reset_char_position = False
+                        continue
+
+
                     if CheckIfInDungeon(scn):
+                        if (not reset_char_position):
+                            ResetPosition()
+                            Sleep(3)
+
+                            if CheckIf(ScreenShot(), "保护目标", [[394,297,169,149]]):
+                                GoLeft(4000)
+                                if Press(CheckIf(ScreenShot(),"操作")):
+                                    Sleep(1)
+                                    if Press(CheckIf(ScreenShot(),"快速破解")):
+                                        Sleep(1)
+                                        GoRight(1000)
+                                        reset_char_position = True
+                                        continue
+                            
+                            QuitDungeon()
+                            counter -= 1
+                            continue
+
+
+
                         CastESpell(setting)
                     
                     if setting._FORCESTOPING.is_set():
                         break
-            case "test":
-                DeviceShell(f"input swipe 263 520 263 520 2000")
-                Sleep(1)
-                DeviceShell(f"input swipe 263 800 263 800 2000")
-                Sleep(1)
-                DeviceShell(f"input swipe 526 698 526 698 2000")
-                Sleep(1)
-                DeviceShell(f"input swipe 0 698 0 698 2000")
         setting._FINISHINGCALLBACK()
         return
     def Farm(set:FarmConfig):

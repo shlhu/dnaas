@@ -12,12 +12,8 @@
         "questName":"65mod",
         "_TYPE":"quest"
     },
-    "[简易]15波火材料无尽探险":{
-        "questName":"[简易]15波火材料无尽探险",
-        "_TYPE":"quest"
-    },
-    "test":{
-        "questName":"test",
+    "15波火材料":{
+        "questName":"15波火材料",
         "_TYPE":"quest"
     }
 }
