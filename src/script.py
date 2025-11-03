@@ -679,7 +679,7 @@ def Factory():
             else:
                 runtimeContext._SPELL_E_CAST_COUNTER = 0
                 Press([1086,797])
-        Sleep(random.uniform(0.5,1.5))
+        Sleep(random.uniform(0.95,1.05))
     
     def CheckIfInDungeon(scn = None):
         if scn is None:
@@ -753,6 +753,8 @@ def Factory():
         match setting._FARMTARGET:
             case "驱离":
                 def resetMove():
+                    GoRight(500)
+                    GoForward(2000)
                     return True
                 BasicQuest(resetMove)
 
