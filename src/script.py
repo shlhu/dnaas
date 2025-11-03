@@ -673,7 +673,6 @@ def Factory():
         nonlocal runtimeContext
         PROB = [1,0.30210303,0.14445311,0.08474409,0.05570346,0.03936413,0.0290976,0.02201336,0.01675358,0.01263117,0.00926888,0.00644352,0.0040144,0.00188813,0]
         if setting._CAST_E_RANDOM:
-            logger.info("1")
             if setting._CAST_E_ABILITY:
                 prob_setting = PROB[setting._CAST_E_INTERVAL-1] if setting._CAST_E_INTERVAL<=15 and setting._CAST_E_INTERVAL >=1 else 1
                 threshold = prob_setting * (runtimeContext._SPELL_E_CAST_COUNTER + 1)
@@ -685,9 +684,7 @@ def Factory():
                     runtimeContext._SPELL_E_CAST_COUNTER = 0
                     Press([1086,797])
         else:
-            logger.info("2")
             if setting._CAST_E_ABILITY:
-                logger.info(f"{runtimeContext._SPELL_E_CAST_COUNTER} {setting._CAST_E_INTERVAL}")
                 if runtimeContext._SPELL_E_CAST_COUNTER < setting._CAST_E_INTERVAL:
                     runtimeContext._SPELL_E_CAST_COUNTER += 1
                 else:
