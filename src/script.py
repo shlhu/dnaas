@@ -27,6 +27,8 @@ CONFIG_VAR_LIST = [
 
             ["cast_e_var",                  tk.BooleanVar, "_CAST_E_ABILITY",            True],
             ["cast_intervel_var",           tk.IntVar,     "_CAST_E_INTERVAL",           5],
+            ["restart_intervel_var",        tk.IntVar,     "_RESTART_INTERVAL",          2000],
+            ["green_book_var",              tk.BooleanVar, "_GREEN_BOOK",                False],
             ]
 
 class FarmConfig:
@@ -65,6 +67,7 @@ class RuntimeContext:
     _ZOOMWORLDMAP = False
     _CRASHCOUNTER = 0
     _IMPORTANTINFO = ""
+    _SPELL_E_CAST_COUNTER = 0
 class FarmQuest:
     _DUNGWAITTIMEOUT = 0
     _TARGETINFOLIST = None
@@ -663,246 +666,166 @@ def Factory():
         Press(FindCoordsOrElseExecuteFallbackAndWait("确定","放弃挑战",2))
         Sleep(2)
 
-    def CastESpell(setting):
+    def CastESpell():
+        nonlocal runtimeContext
+        PROB = [1,0.30210303,0.14445311,0.08474409,0.05570346,0.03936413,0.0290976,0.02201336,0.01675358,0.01263117,0.00926888,0.00644352,0.0040144,0.00188813,0]
         if setting._CAST_E_ABILITY:
-            Press([1086,797])
-            Sleep(setting._CAST_E_INTERVAL)
+            prob_setting = PROB[setting._CAST_E_INTERVAL-1] if setting._CAST_E_INTERVAL<=15 and setting._CAST_E_INTERVAL >=1 else 1
+            threshold = prob_setting * (runtimeContext._SPELL_E_CAST_COUNTER + 1)
+            this_roll = random.random()
+            # logger.info(f"{this_roll:.2f} {threshold:.2f}")
+            if this_roll > threshold:
+                runtimeContext._SPELL_E_CAST_COUNTER += 1
+            else:
+                runtimeContext._SPELL_E_CAST_COUNTER = 0
+                Press([1086,797])
+        Sleep(random.uniform(0.5,1.5))
     
     def CheckIfInDungeon(scn = None):
         if scn is None:
             scn = ScreenShot()
         
         if CheckIf(scn,'indungeon',[[0,0,125,125]]) or CheckIf(scn,'indungeon_cloud',[[0,0,125,125]]):
-            logger.info("已在副本中.")
+            logger.debug("已在副本中.")
             return True
         else:
             return False
     ##################################################################
+    def BasicQuest(resetCharPositionFunc, MAX_TURN=3):
+        counter = 0
+        in_game_counter = 0
+        start_time = time.time()
+        total_time = 0
+        reset_char_position = False
+        logger.info("开始任务!")
+            
+        while 1:
+            scn = ScreenShot()
+            if pos:=(CheckIf(scn, "开始挑战")):
+                if setting._GREEN_BOOK:
+                    Press([620,520])
+                    Sleep(0.5)
+                Press(pos)
+                Sleep(10)
+                continue
+            if pos:=(CheckIf(scn, "继续挑战")):
+                logger.info(f"已完成{in_game_counter + 1}小局")
+                if in_game_counter < MAX_TURN - 1:
+                    Press(pos)
+                    in_game_counter +=1
+                else:
+                    in_game_counter = 0
+                    logger.info("已完成目标小局, 撤离")
+                    Press(CheckIf(scn, "撤离"))
+                    Sleep(2)
+            if pos:=(CheckIf(scn, "再次进行")):
+                cost_time = time.time()-start_time
+                if cost_time > 5:
+                    Press(pos)
+                    counter+=1
+                    total_time = total_time + cost_time
+                    logger.info(f"第{counter}次完成.\n本次用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.", extra={"summary": True})
+                    start_time = time.time()
+                    reset_char_position = False
+                    continue
+
+            if CheckIfInDungeon(scn):
+                if not reset_char_position:
+                    if resetCharPositionFunc():
+                        reset_char_position = True
+                        continue
+                    QuitDungeon()
+                    counter-=1
+                    continue
+
+            if time.time() - start_time > setting._RESTART_INTERVAL:
+                logger.info("时间太久了, 重来吧")
+                QuitDungeon()
+                start_time = time.time()
+                continue
+            CastESpell()
+            if setting._FORCESTOPING.is_set():
+                break
+
     def QuestFarm():
         nonlocal setting # 强制自动战斗 等等.
         nonlocal runtimeContext
         match setting._FARMTARGET:
             case "驱离":
-                counter = 0
-                start_time = time.time()
-                total_time = 0
-                logger.info("开始任务!")
-                reset_char_position = False
-                while 1:
-                    scn = ScreenShot()
-                    if Press(CheckIf(scn, "开始挑战")):
-                        Sleep(10)
-                        continue
-                    if Press(CheckIf(scn, "再次进行")) or Press(CheckIf(scn, "继续挑战")):
-                        counter+=1
-                        cost_time = time.time()-start_time
-                        total_time = total_time + cost_time
-                        logger.info(f"第{counter}次完成.\n本次用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.", extra={"summary": True})
-                        start_time = time.time()
-                        Sleep(3)
-                        reset_char_position = False
-                        continue
-                    if time.time() - start_time > 600:
-                        logger.info("时间太久了, 重来吧")
-                        QuitDungeon()
-                        start_time = time.time()
-                    
-                    if not reset_char_position:
-                        ResetPosition()
-                        reset_char_position = True
+                def resetMove():
+                    return True
+                BasicQuest(resetMove)
 
-                    CastESpell(setting)
-
-                    if setting._FORCESTOPING.is_set():
-                        break
             case "60皎皎币":
-                counter = 0
-                in_game_counter = 0
-                start_time = time.time()
-                total_time = 0
-                reset_char_position = False
-                logger.info("开始任务!")
-                   
-                while 1:
-                    scn = ScreenShot()
-                    if Press(CheckIf(scn, "开始挑战")):
-                        Sleep(10)
-                        continue
-                    if pos:=(CheckIf(scn, "继续挑战")):
-                        if in_game_counter != 2:
-                            logger.info("已完成一小局")
-                            Press(pos)
-                            in_game_counter +=1
-                        else:
-                            in_game_counter = 0
-                            logger.info("已完成三小局, 撤离")
-                            Press(CheckIf(scn, "撤离"))
-                            Sleep(2)
-                            continue
-                    if Press(CheckIf(scn, "再次进行")):
-                        counter+=1
-                        cost_time = time.time()-start_time
-                        total_time = total_time + cost_time
-                        logger.info(f"第{counter}次完成.\n本次用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.", extra={"summary": True})
-                        start_time = time.time()
-                        reset_char_position = False
-                        continue
-                    
-                    if CheckIfInDungeon(scn):
-                        if (not reset_char_position):
-                            ResetPosition()
-                            Sleep(3)
+                def resetMove():
+                    ResetPosition()
+                    Sleep(3)
 
-                            if CheckIf(ScreenShot(), "保护目标", [[1091,353,81,64]]):
-                                # GoForward(1500)
-                                # DeviceShell(f"input swipe 800 450 1136 380")
-                                # GoForward(1500)
-                                # Press([520,785])
-                                # Sleep(0.5)
-                                # Press([1359,478])
-                                # GoForward(20000)
+                    if CheckIf(ScreenShot(), "保护目标", [[1091,353,81,64]]):
+                        # GoForward(1500)
+                        # DeviceShell(f"input swipe 800 450 1136 380")
+                        # GoForward(1500)
+                        # Press([520,785])
+                        # Sleep(0.5)
+                        # Press([1359,478])
+                        # GoForward(20000)
 
-                                # GoLeft(6000)
-                                # GoForward(25000)
+                        # GoLeft(6000)
+                        # GoForward(25000)
 
-                                # reset_char_position = True
-                                # continue
-                                None
-                            if CheckIf(ScreenShot(), "保护目标", [[793,174,74,86]]):
-                                Dodge(3)
-                                GoRight(3000)
-                                GoForward(16000)
-                                GoLeft(2500)
-                                GoForward(13000)
-                                
-                                if CheckIf(ScreenShot(), "保护目标", [[502,262,96,96]]):
-                                    GoLeft(4000)
-                                    GoForward(30000)
-                                    reset_char_position = True
-                                    continue
-                                if CheckIf(ScreenShot(), "保护目标", [[746,176,98,81]]):
-                                    GoForward(32000)
-                                    reset_char_position = True
-                                    continue
-
-                            QuitDungeon()
-                            counter -= 1
-                            continue
-
-                        CastESpell(setting)
-                    
-                    if setting._FORCESTOPING.is_set():
-                        break
+                        # reset_char_position = True
+                        # continue
+                        None
+                    if CheckIf(ScreenShot(), "保护目标", [[793,174,74,86]]):
+                        Dodge(3)
+                        GoRight(3000)
+                        GoForward(16000)
+                        GoLeft(2500)
+                        GoForward(13000)
+                        
+                        if CheckIf(ScreenShot(), "保护目标", [[502,262,96,96]]):
+                            GoLeft(4000)
+                            GoForward(30000)
+                            return True
+                        if CheckIf(ScreenShot(), "保护目标", [[746,176,98,81]]):
+                            GoForward(32000)
+                            return True
+                        
+                    return False
+                
+                BasicQuest(resetMove)
             case "65mod":
-                counter = 0
-                in_game_counter = 0
-                start_time = time.time()
-                total_time = 0
-                reset_char_position = False
-                logger.info("开始任务!")
-                   
-                while 1:
-                    scn = ScreenShot()
-                    if Press(CheckIf(scn, "开始挑战")):
-                        Sleep(10)
-                        continue
-                    if pos:=(CheckIf(scn, "继续挑战")):
-                        if in_game_counter != 2:
-                            logger.info("已完成一小局")
-                            Press(pos)
-                            in_game_counter +=1
-                        else:
-                            in_game_counter = 0
-                            logger.info("已完成三小局, 撤离")
-                            Press(CheckIf(scn, "撤离"))
-                            Sleep(2)
-                            continue
-                    if Press(CheckIf(scn, "再次进行")):
-                        counter+=1
-                        cost_time = time.time()-start_time
-                        total_time = total_time + cost_time
-                        logger.info(f"第{counter}次完成.\n本次用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.", extra={"summary": True})
-                        start_time = time.time()
-                        reset_char_position = False
-                        continue
-                    
-                    if time.time() - start_time > 3000:
-                        logger.info("时间太久了, 重来吧")
-                        QuitDungeon()
-                        start_time = time.time()
-                    
-                    if CheckIfInDungeon(scn):
-                        if (not reset_char_position):
-                            Sleep(2)
-                            GoLeft(8500)
-                            GoForward(10300)
-                            GoLeft(22500)
-                            ResetPosition()
-                            reset_char_position = True
+                def resetMove():
+                    Sleep(2)
+                    GoLeft(8500)
+                    GoForward(10300)
+                    GoLeft(22500)
+                    ResetPosition()
+                    return True
 
-                        CastESpell(setting)
-                    
-                    if setting._FORCESTOPING.is_set():
-                        break
-            case "15波火材料":
-                counter = 0
-                in_game_counter = 0
-                start_time = time.time()
-                total_time = 0
-                reset_char_position = False
-                MAX_TUEN = 15
-                logger.info("开始任务!")
-                   
-                while 1:
-                    scn = ScreenShot()
-                    if Press(CheckIf(scn, "开始挑战")):
-                        Sleep(10)
-                        continue
-                    if pos:=(CheckIf(scn, "继续挑战")):
-                        logger.info(f"已完成{in_game_counter + 1}小局")
-                        if in_game_counter < MAX_TUEN - 1:
-                            Press(pos)
-                            in_game_counter +=1
-                        else:
-                            in_game_counter = 0
-                            logger.info("已完成目标小局, 撤离")
-                            Press(CheckIf(scn, "撤离"))
-                            Sleep(2)
-                    if Press(CheckIf(scn, "再次进行")):
-                        counter+=1
-                        cost_time = time.time()-start_time
-                        total_time = total_time + cost_time
-                        logger.info(f"第{counter}次完成.\n本次用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.", extra={"summary": True})
-                        start_time = time.time()
-                        reset_char_position = False
-                        continue
+                BasicQuest(resetMove)   
+            case "15火(全自动)":
+                def resetMove():
+                    ResetPosition()
+                    Sleep(3)
 
-
-                    if CheckIfInDungeon(scn):
-                        if (not reset_char_position):
-                            ResetPosition()
+                    if CheckIf(ScreenShot(), "保护目标", [[394,297,169,149]]):
+                        GoLeft(3000)
+                        if Press(CheckIf(ScreenShot(),"操作")):
                             Sleep(3)
-
-                            if CheckIf(ScreenShot(), "保护目标", [[394,297,169,149]]):
-                                GoLeft(4000)
-                                if Press(CheckIf(ScreenShot(),"操作")):
-                                    Sleep(1)
-                                    if Press(CheckIf(ScreenShot(),"快速破解")):
-                                        Sleep(1)
-                                        GoRight(1000)
-                                        reset_char_position = True
-                                        continue
+                            if Press(CheckIf(ScreenShot(),"快速破解")):
+                                Sleep(3)
+                                GoRight(1000)
+                                return True
                             
-                            QuitDungeon()
-                            counter -= 1
-                            continue
-
-
-
-                        CastESpell(setting)
-                    
-                    if setting._FORCESTOPING.is_set():
-                        break
+                    return False
+                
+                BasicQuest(resetMove,15)
+            case "15火(半自动)":
+                def resetMove():
+                    return True
+                
+                BasicQuest(resetMove,15)
         setting._FINISHINGCALLBACK()
         return
     def Farm(set:FarmConfig):

@@ -183,7 +183,7 @@ class ConfigPanelApp(tk.Toplevel):
             style="Custom.TCheckbutton"
             )
         self.cast_E_check.grid(row=0, column=0)
-        ttk.Label(frame_row5, text=" | 间隔:").grid(row=0, column=1, sticky=tk.W, pady=5)
+        ttk.Label(frame_row5, text=" | 间隔(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
         self.cast_intervel_entry = ttk.Entry(frame_row5,
                                              textvariable=self.cast_intervel_var,
                                              validate="key",
@@ -197,6 +197,41 @@ class ConfigPanelApp(tk.Toplevel):
             width=4
             )
         self.button_save_cast_intervel.grid(row=0, column=3)
+
+        # 超时设置
+        row_counter += 1
+        frame_row6 = ttk.Frame(self.main_frame)
+        frame_row6.grid(row=row_counter, column=0, sticky="ew", pady=5)
+        ttk.Label(frame_row6, text="超时检查(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.restart_intervel_entry = ttk.Entry(frame_row6,
+                                             textvariable=self.restart_intervel_var,
+                                             validate="key",
+                                             validatecommand=(vcmd_non_neg, '%P'),
+                                             width=5)
+        self.restart_intervel_entry.grid(row=0, column=2)
+        self.button_save_restart_intervel = ttk.Button(
+            frame_row6,
+            text="保存",
+            command = self.save_config,
+            width=4
+            )
+        self.button_save_restart_intervel.grid(row=0, column=3)
+
+        # 休息设置
+        row_counter += 1
+        frame_row7 = ttk.Frame(self.main_frame)
+        frame_row7.grid(row=row_counter, column=0, sticky="ew", pady=5)
+
+        def checkcommand():
+            self.save_config()
+        self.use_green_book_check = ttk.Checkbutton(
+            frame_row7,
+            variable=self.green_book_var,
+            text="尝试使用绿书",
+            command=checkcommand,
+            style="Custom.TCheckbutton"
+            )
+        self.use_green_book_check.grid(row=0, column=0)
 
         # 分割线
         self.columnconfigure(0, weight=1)
@@ -287,7 +322,10 @@ class ConfigPanelApp(tk.Toplevel):
             self.button_save_adb_port,
             self.cast_E_check,
             self.cast_intervel_entry,
-            self.button_save_cast_intervel
+            self.button_save_cast_intervel,
+            self.restart_intervel_entry,
+            self.button_save_restart_intervel,
+            self.use_green_book_check
             ]
 
         if state == tk.DISABLED:
