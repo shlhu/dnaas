@@ -105,6 +105,9 @@ class ConfigPanelApp(tk.Toplevel):
         self.main_frame = ttk.Frame(self, padding="10")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
+        def checkcommand():
+            self.save_config()
+
         #设定adb
         row_counter = 0
         frame_row0 = ttk.Frame(self.main_frame)
@@ -168,13 +171,80 @@ class ConfigPanelApp(tk.Toplevel):
         self.farm_target_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=5)
         self.farm_target_combo.bind("<<ComboboxSelected>>", lambda e: self.save_config())
 
-        # 休息设置
+        # 分割线.
+        row_counter += 1
+        ttk.Separator(self.main_frame, orient='horizontal').grid(row=row_counter, column=0, columnspan=3, sticky='ew', pady=10)
+
+        # 超时设置
+        row_counter += 1
+        frame_row6 = ttk.Frame(self.main_frame)
+        frame_row6.grid(row=row_counter, column=0, sticky="ew", pady=5)
+        ttk.Label(frame_row6, text="每轮次超时检查(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.restart_intervel_entry = ttk.Entry(frame_row6,
+                                             textvariable=self.restart_intervel_var,
+                                             validate="key",
+                                             validatecommand=(vcmd_non_neg, '%P'),
+                                             width=5)
+        self.restart_intervel_entry.grid(row=0, column=2)
+        self.button_save_restart_intervel = ttk.Button(
+            frame_row6,
+            text="保存",
+            command = self.save_config,
+            width=4
+            )
+        self.button_save_restart_intervel.grid(row=0, column=3)
+
+        # 自定义轮数
+        row_counter += 1
+        frame_row3 = ttk.Frame(self.main_frame)
+        frame_row3.grid(row=row_counter, column=0, sticky="ew", pady=5)
+
+        self.round_custom_check = ttk.Checkbutton(
+            frame_row3,
+            variable=self.round_custom_var,
+            text="使用自定义轮数",
+            command=checkcommand,
+            style="Custom.TCheckbutton"
+            )
+        self.round_custom_check.grid(row=0, column=0)
+        ttk.Label(frame_row3, text=" | 轮数:").grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.round_custom_time_entry = ttk.Entry(frame_row3,
+                                             textvariable=self.round_custom_time_var,
+                                             validate="key",
+                                             validatecommand=(vcmd_non_neg, '%P'),
+                                             width=5)
+        self.round_custom_time_entry.grid(row=0, column=2)
+        self.button_save_round_custom = ttk.Button(
+            frame_row3,
+            text="保存",
+            command = self.save_config,
+            width=4
+            )
+        self.button_save_round_custom.grid(row=0, column=3)
+
+        # 绿书
+        row_counter += 1
+        frame_row7 = ttk.Frame(self.main_frame)
+        frame_row7.grid(row=row_counter, column=0, sticky="ew", pady=5)
+
+        self.use_green_book_check = ttk.Checkbutton(
+            frame_row7,
+            variable=self.green_book_var,
+            text="尝试使用绿书",
+            command=checkcommand,
+            style="Custom.TCheckbutton"
+            )
+        self.use_green_book_check.grid(row=0, column=0)
+
+        # 分割线.
+        row_counter += 1
+        ttk.Separator(self.main_frame, orient='horizontal').grid(row=row_counter, column=0, columnspan=3, sticky='ew', pady=10)
+
+        # 自动放E技能
         row_counter += 1
         frame_row5 = ttk.Frame(self.main_frame)
         frame_row5.grid(row=row_counter, column=0, sticky="ew", pady=5)
 
-        def checkcommand():
-            self.save_config()
         self.cast_E_check = ttk.Checkbutton(
             frame_row5,
             variable=self.cast_e_var,
@@ -198,7 +268,7 @@ class ConfigPanelApp(tk.Toplevel):
             )
         self.button_save_cast_intervel.grid(row=0, column=3)
 
-        # 休息设置
+        # E技能释放
         row_counter += 1
         frame_row4 = ttk.Frame(self.main_frame)
         frame_row4.grid(row=row_counter, column=0, sticky="ew", pady=5)
@@ -211,41 +281,6 @@ class ConfigPanelApp(tk.Toplevel):
             style="Custom.TCheckbutton"
             )
         self.cast_E_random_check.grid(row=0, column=0)
-
-        # 超时设置
-        row_counter += 1
-        frame_row6 = ttk.Frame(self.main_frame)
-        frame_row6.grid(row=row_counter, column=0, sticky="ew", pady=5)
-        ttk.Label(frame_row6, text="超时检查(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.restart_intervel_entry = ttk.Entry(frame_row6,
-                                             textvariable=self.restart_intervel_var,
-                                             validate="key",
-                                             validatecommand=(vcmd_non_neg, '%P'),
-                                             width=5)
-        self.restart_intervel_entry.grid(row=0, column=2)
-        self.button_save_restart_intervel = ttk.Button(
-            frame_row6,
-            text="保存",
-            command = self.save_config,
-            width=4
-            )
-        self.button_save_restart_intervel.grid(row=0, column=3)
-
-        # 休息设置
-        row_counter += 1
-        frame_row7 = ttk.Frame(self.main_frame)
-        frame_row7.grid(row=row_counter, column=0, sticky="ew", pady=5)
-
-        def checkcommand():
-            self.save_config()
-        self.use_green_book_check = ttk.Checkbutton(
-            frame_row7,
-            variable=self.green_book_var,
-            text="尝试使用绿书",
-            command=checkcommand,
-            style="Custom.TCheckbutton"
-            )
-        self.use_green_book_check.grid(row=0, column=0)
 
         # 分割线
         self.columnconfigure(0, weight=1)
@@ -340,7 +375,10 @@ class ConfigPanelApp(tk.Toplevel):
             self.restart_intervel_entry,
             self.button_save_restart_intervel,
             self.use_green_book_check,
-            self.cast_E_random_check
+            self.cast_E_random_check,
+            self.round_custom_check,
+            self.round_custom_time_entry,
+            self.button_save_round_custom
             ]
 
         if state == tk.DISABLED:

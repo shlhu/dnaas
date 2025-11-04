@@ -31,7 +31,9 @@ CONFIG_VAR_LIST = [
             ["cast_intervel_var",           tk.IntVar,     "_CAST_E_INTERVAL",           5],
             ["restart_intervel_var",        tk.IntVar,     "_RESTART_INTERVAL",          2000],
             ["green_book_var",              tk.BooleanVar, "_GREEN_BOOK",                False],
-            ["cast_e_random_var",           tk.BooleanVar, "_CAST_E_RANDOM",             False]
+            ["cast_e_random_var",           tk.BooleanVar, "_CAST_E_RANDOM",             False],
+            ["round_custom_var",            tk.BooleanVar, "_ROUND_CUSTOM_ACTIVE",       False],
+            ["round_custom_time_var",       tk.IntVar,     "_ROUND_CUSTOM_TIME",         3],
             ]
 
 class FarmConfig:
@@ -685,7 +687,8 @@ def Factory():
                     Press([1086,797])
         else:
             if setting._CAST_E_ABILITY:
-                if runtimeContext._SPELL_E_CAST_COUNTER < setting._CAST_E_INTERVAL:
+                # logger.debug(runtimeContext._SPELL_E_CAST_COUNTER)
+                if runtimeContext._SPELL_E_CAST_COUNTER < setting._CAST_E_INTERVAL - 1:
                     runtimeContext._SPELL_E_CAST_COUNTER += 1
                 else:
                     runtimeContext._SPELL_E_CAST_COUNTER = 0
@@ -700,6 +703,16 @@ def Factory():
             return True
         else:
             return False
+        
+    def CheckIfMonthlySub(scn = None):
+        if scn is None:
+            scn = ScreenShot()
+
+        now = datetime.now()
+        seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+        if (seconds_since_midnight>=4*3600) and (seconds_since_midnight<=6*3600):
+            if Press(CheckIf(scn,"小月卡")):
+                logger.info("已领取小月卡.")
     ##################################################################
     def BasicQuest(resetCharPositionFunc, MAX_TURN=3):
         counter = 0
@@ -707,7 +720,14 @@ def Factory():
         start_time = time.time()
         total_time = 0
         reset_char_position = False
+        round_timer = time.time()
+        runtimeContext._SPELL_E_CAST_COUNTER = setting._CAST_E_INTERVAL // 2
+        if setting._ROUND_CUSTOM_ACTIVE:
+            MAX_TURN = setting._ROUND_CUSTOM_TIME
+            logger.info(f"已设置自定义轮数, 每次将刷取{MAX_TURN}轮次.")
+
         logger.info("开始任务!")
+        
             
         while 1:
             scn = ScreenShot()
@@ -721,24 +741,34 @@ def Factory():
             if pos:=(CheckIf(scn, "继续挑战")):
                 logger.info(f"已完成{in_game_counter + 1}小局")
                 if in_game_counter < MAX_TURN - 1:
-                    Press(pos)
+                    cost_time = time.time()-start_time
+                    total_time = total_time + cost_time
+                    logger.info(f"本轮用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.")
+                    start_time = time.time()
+
                     in_game_counter +=1
+                    Press(pos)
                 else:
-                    in_game_counter = 0
                     logger.info("已完成目标小局, 撤离")
                     Press(CheckIf(scn, "撤离"))
+
+                    in_game_counter = 0
                     Sleep(2)
             if pos:=(CheckIf(scn, "再次进行")):
                 cost_time = time.time()-start_time
                 if cost_time > 5:
                     Press(pos)
                     counter+=1
-                    total_time = total_time + cost_time
-                    logger.info(f"第{counter}次完成.\n本次用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.", extra={"summary": True})
-                    start_time = time.time()
                     reset_char_position = False
-                    continue
 
+                    total_time = total_time + cost_time
+                    logger.info(f"本轮用时{cost_time:.2f}秒.\n累计用时{total_time:.2f}秒.")
+                    logger.info(f"第{counter}次完成.\n累计用时{total_time:.2f}秒.", extra={"summary": True})
+                    start_time = time.time()
+
+                    continue
+            CheckIfMonthlySub(scn)
+            
             if CheckIfInDungeon(scn):
                 if not reset_char_position:
                     if resetCharPositionFunc():
@@ -747,15 +777,18 @@ def Factory():
                     QuitDungeon()
                     counter-=1
                     continue
-
+            
             if time.time() - start_time > setting._RESTART_INTERVAL:
                 logger.info("时间太久了, 重来吧")
                 QuitDungeon()
                 start_time = time.time()
                 continue
-            t = time.time()
-            Sleep(math.ceil(t) - t)
             CastESpell()
+            if time.time()-round_timer < 1:
+                Sleep(1-(time.time()-round_timer))
+            round_timer = time.time()
+            logger.debug(f"round time {round_timer}")
+
             if setting._FORCESTOPING.is_set():
                 break
 
@@ -867,7 +900,7 @@ def Factory():
                     
                     return False
 
-                BasicQuest(resetMove)  
+                BasicQuest(resetMove,2)  
         setting._FINISHINGCALLBACK()
         return
     def Farm(set:FarmConfig):
