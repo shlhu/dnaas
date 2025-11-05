@@ -926,6 +926,7 @@ def Factory():
                         GoLeft(6000)
                         GoBack(500)
                         GoLeft(3000)
+                        GoRight(200)
                         return True
                     
                     return False
