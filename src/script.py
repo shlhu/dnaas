@@ -73,6 +73,7 @@ class RuntimeContext:
     _ZOOMWORLDMAP = False
     _CRASHCOUNTER = 0
     _IMPORTANTINFO = ""
+    _RANDOM_E_COUNTER = 0
 class FarmQuest:
     _DUNGWAITTIMEOUT = 0
     _TARGETINFOLIST = None
@@ -293,7 +294,7 @@ def CutRoI(screenshot,roi):
     if roi1_x_start_clipped < roi1_x_end_clipped and roi1_y_start_clipped < roi1_y_end_clipped:
         pixels_not_in_roi1_mask[roi1_y_start_clipped:roi1_y_end_clipped, roi1_x_start_clipped:roi1_x_end_clipped] = False
 
-    screenshot[pixels_not_in_roi1_mask] = 0
+    screenshot[pixels_not_in_roi1_mask] = 255
 
     if (roi is not []):
         for roi2_rect in roi_copy:
@@ -598,7 +599,7 @@ def Factory():
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # 格式：20230825_153045
             file_path = os.path.join(LOGS_FOLDER_NAME, f"{timestamp}.png")
             cv2.imwrite(file_path, ScreenShot())
-            logger.info(f"重启前截图已保存在{file_path}中.")
+            logger.info(f"重启前截图已保存在{file_path}中.\n请发送该截图和log文件以便进行bug反馈.")
         else:
             runtimeContext._CRASHCOUNTER +=1
             logger.info(f"跳过了重启前截图.\n崩溃计数器: {runtimeContext._CRASHCOUNTER}\n崩溃计数器超过5次后会重启模拟器.")
@@ -607,13 +608,22 @@ def Factory():
                 KillEmulator(setting)
                 CheckRestartConnectADB(setting)
 
-        package_name = "jp.co.drecom.wizardry.daphne"
+        waittime = 20
+        packageList = DeviceShell("pm list packages -3")
+        if "com.hero.dna.gf.yun.game" in packageList:
+            package_name = "com.hero.dna.gf.yun.game"
+            logger.info("有云游戏, 优先启动云游戏.")
+            waittime = 5
+        else:
+            package_name = "com.hero.dna.gf" # "com.hero.dna.gf.yun.game"
+            logger.info("准备启动游戏.")
+            waittime = 20
         mainAct = DeviceShell(f"cmd package resolve-activity --brief {package_name}").strip().split('\n')[-1]
         DeviceShell(f"am force-stop {package_name}")
         Sleep(2)
-        logger.info("巫术, 启动!")
+        logger.info("二重螺旋, 启动!")
         logger.debug(DeviceShell(f"am start -n {mainAct}"))
-        Sleep(10)
+        Sleep(waittime)
         raise RestartSignal()
     class RestartSignal(Exception):
         pass
@@ -685,18 +695,23 @@ def Factory():
             return 
 
     def CastESpell(start_time):
+        nonlocal runtimeContext
         last_time = round(time.time()-start_time)-5
         PROB = [1,0.30210303,0.14445311,0.08474409,0.05570346,0.03936413,0.0290976,0.02201336,0.01675358,0.01263117,0.00926888,0.00644352,0.0040144,0.00188813,0]
         if setting._CAST_E_RANDOM:
             if setting._CAST_E_ABILITY:
                 prob_setting = PROB[setting._CAST_E_INTERVAL-1] if setting._CAST_E_INTERVAL<=15 and setting._CAST_E_INTERVAL >=1 else 1
-                threshold = prob_setting * (last_time % setting._CAST_E_INTERVAL)
+                threshold = prob_setting * (runtimeContext._RANDOM_E_COUNTER)
                 this_roll = random.random()
-                # logger.info(f"{this_roll:.2f} {threshold:.2f}")
+                # logger.info(f"{runtimeContext._RANDOM_E_COUNTER} {this_roll:.2f} {threshold:.2f}")
                 if this_roll <= threshold:
+                    runtimeContext._RANDOM_E_COUNTER = 0
                     Press([1086,797])
+                else:
+                    runtimeContext._RANDOM_E_COUNTER  += 1
         else:
             if setting._CAST_E_ABILITY:
+                # logger.info(f"E spell {last_time % setting._CAST_E_INTERVAL}")
                 if last_time % setting._CAST_E_INTERVAL == 0:
                     Press([1086,797])
 
@@ -741,7 +756,63 @@ def Factory():
                 return True
         return False
     ##################################################################
-    def BasicQuest(resetCharPositionFunc, MAX_TURN=3):
+    def SelectQuest(EOT=None,resetMove=None, defaultWave = 3):
+        check_counter = 0
+        while 1:
+            if setting._FORCESTOPING.is_set():
+                break
+            
+            scn = ScreenShot()
+
+            if Press(CheckIf(scn, "点击进入游戏")) or Press(CheckIf(scn, "点击进入游戏_云")):
+                logger.info("点击进入游戏.")
+                Sleep(20)
+                check_counter = 0
+                continue
+            
+            if CheckIf(scn, "任务图标"):
+                logger.info("任务菜单.")
+                Press([91,17])
+                Sleep(1)
+                check_counter = 0
+                continue
+            if Press(CheckIf(scn, "历练")):
+                logger.info("历练.")
+                check_counter = 0
+                continue
+            if Press(CheckIf(WrapImage(scn,1.7,0,0),"委托",[[50,190,79,85]])) or Press(CheckIf(WrapImage(scn,1.7,0,0),"委托",[[7,182,105,97]])):
+                logger.info("委托.")
+                check_counter = 0
+                continue
+            try:
+                if CheckIfInDungeon(scn) or CheckIf(scn,"勘察无尽"):
+                    if (CheckIf(scn,"勘察无尽")) and (EOT!=None):
+                        logger.info("关卡选择.")
+                        EOT()
+                    BasicQuest(resetMove, defaultWave)
+            except:
+                if not EOT:
+                    logger.error("由于信息不足, 无法重启, 脚本中止.")
+                    return
+                continue
+            
+            check_counter += 1
+            logger.info(f"定位失败, 尝试次数:{check_counter}/20")
+            Sleep(1)
+            Press([1,1])
+            if check_counter >= 5:
+                if ("dna" not in DeviceShell("dumpsys window | grep mCurrentFocus")):
+                    logger.info("游戏未启动, 尝试启动.")
+                    try:
+                        restartGame(skipScreenShot = True)
+                        Press([1,1])
+                    except:
+                        pass
+                    check_counter = 0
+                    continue
+            if check_counter >= 20:
+                logger.error("定位失败, 重启游戏.")
+    def BasicQuest(resetCharPositionFunc=None, MAX_TURN=3):
         nonlocal runtimeContext
         counter = 0
         in_game_counter = 0
@@ -807,7 +878,7 @@ def Factory():
             CheckIfMonthlySub(scn)    
             if CheckIfInDungeon(scn):
                 if not reset_char_position:
-                    if resetCharPositionFunc():
+                    if (resetCharPositionFunc==None) or resetCharPositionFunc():
                         reset_char_position = True
                         continue
                     QuitDungeon()
@@ -828,20 +899,30 @@ def Factory():
 
             if setting._FORCESTOPING.is_set():
                 break
-
+    def BasicQuestSelect(target, lvl, fire = False):
+        FindCoordsOrElseExecuteFallbackAndWait("开始挑战",[target,"input swipe 1400 400 1000 400"],1)
+        roi = [50,182+57*(lvl-1),275,57]
+        while Press(CheckIf(ScreenShot(),"等级未选中",[roi])):
+            1
+        if fire:
+            FindCoordsOrElseExecuteFallbackAndWait("无尽火",[1187,778],1)
+    ##################################################################
     def QuestFarm():
         nonlocal setting # 强制自动战斗 等等.
         nonlocal runtimeContext
         match setting._FARMTARGET:
             case "驱离":
                 def resetMove():
-                    GoRight(500)
                     GoForward(15000)
-                    GoBack(500)
+                    GoBack(1000)
+                    GoLeft(100)
                     return True
-                BasicQuest(resetMove,5)
-
+                SelectQuest(None,resetMove,5)
+            case "半自动血清/守卫":
+                SelectQuest(None,None,5)
             case "60皎皎币":
+                def EOT():
+                    BasicQuestSelect("皎皎币",3,False)
                 def resetMove():
                     ResetPosition()
                     Sleep(3)
@@ -878,33 +959,10 @@ def Factory():
                         
                     return False
                 
-                BasicQuest(resetMove)
-            case "65mod":
-                def resetMove():
-                    Sleep(2)
-                    GoBack(1000)
-                    GoLeft(6000)
-                    GoForward(11300)
-                    GoLeft(23000)
-                    ResetPosition()
-                    return True
-
-                BasicQuest(resetMove)   
-            case "15火(全自动)":
-                def resetMove():
-                    ResetPosition()
-                    Sleep(3)
-
-                    if CheckIf(ScreenShot(), "保护目标", [[394,297,169,149]]):
-                        GoLeft(2800)
-                        if QuickUnlock():
-                            GoRight(800)
-                            return True
-                            
-                    return False
-                
-                BasicQuest(resetMove,15)
+                SelectQuest(EOT,resetMove)
             case "70皎皎币":
+                def EOT():
+                    BasicQuestSelect("皎皎币",4,False)
                 def resetMove():
                     Sleep(2)
                     ResetPosition()
@@ -921,7 +979,10 @@ def Factory():
                         GoBack(1000)
                         GoLeft(6000)
                         GoForward(11300)
-                        GoLeft(23000)
+                        GoLeft(6000)
+                        DoubleJump()
+                        GoLeft(3000)
+                        GoLeft(14000)
                         GoLeft(6000)
                         GoBack(500)
                         GoLeft(3000)
@@ -930,8 +991,24 @@ def Factory():
                     
                     return False
 
-                BasicQuest(resetMove,1)  
+                SelectQuest(EOT,resetMove,1)  
+            case "65mod":
+                def resetMove():
+                    Sleep(2)
+                    GoBack(1000)
+                    GoLeft(6000)
+                    GoForward(11300)
+                    GoLeft(6000)
+                    DoubleJump()
+                    GoLeft(3000)
+                    GoLeft(14000)
+                    ResetPosition()
+                    return True
+
+                SelectQuest(None,resetMove)   
             case "50经验":
+                def EOT():
+                    BasicQuestSelect("避险",5,False)
                 def resetMove():
                     if CheckIf(ScreenShot(), "保护目标", [[693,212,109,110]]):
                         GoForward(9600)
@@ -944,8 +1021,10 @@ def Factory():
                             GoRight(1150)
                             GoForward(2000)
                             ResetPosition()
+                            Sleep(10)
+                            GoBack(10000)
+                            ResetPosition()
                             Sleep(3)
-                            GoBack(13000)
                             GoLeft(4000)
                             DoubleJump()
                             GoLeft(1000)
@@ -954,8 +1033,26 @@ def Factory():
                             GoRight(3000)
                             return True
                     return False
-                BasicQuest(resetMove)
+                SelectQuest(EOT,resetMove)
+            case "10火":
+                def EOT():
+                    BasicQuestSelect("探险无尽",1,True)
+                def resetMove():
+                    ResetPosition()
+                    Sleep(3)
+
+                    if CheckIf(ScreenShot(), "保护目标", [[394,297,169,149]]):
+                        GoLeft(2800)
+                        if QuickUnlock():
+                            GoRight(800)
+                            return True
+                            
+                    return False
+                
+                SelectQuest(EOT,resetMove,15)
             case "30火":
+                def EOT():
+                    BasicQuestSelect("探险无尽",3,True)
                 def resetMove():
                     ResetPosition()
                     GoLeft(9150)
@@ -975,7 +1072,30 @@ def Factory():
                         GoForward(200)
                         return True
                     return False
-                BasicQuest(resetMove, 10)
+                SelectQuest(EOT,resetMove, 10)
+            case "60火":
+                def EOT():
+                    BasicQuestSelect("探险无尽",6,True)
+                def resetMove():
+                    ResetPosition()
+                    GoLeft(9150)
+                    GoBack(1000)
+                    Press([1359,478])
+                    Sleep(0.5)
+                    Press([1359,478])
+                    GoBack(500)
+                    Sleep(0.5)
+                    Press([1359,478])
+                    Sleep(0.5)
+                    Press([1359,478])
+                    GoBack(500)
+                    if QuickUnlock():
+                        GoLeft(4700)
+                        GoBack(2000)
+                        GoForward(200)
+                        return True
+                    return False
+                SelectQuest(EOT,resetMove, 10)
         setting._FINISHINGCALLBACK()
         return
     def Farm(set:FarmConfig):
