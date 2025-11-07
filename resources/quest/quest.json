@@ -33,7 +33,11 @@
         "_TYPE":"quest"
     },
     "50经验":{
-        "questName":"50经验本",
+        "questName":"50人物经验本",
+        "_TYPE":"quest"
+    },
+    "武器材料":{
+        "questName":"70武器材料突破",
         "_TYPE":"quest"
     }
 }

@@ -110,12 +110,12 @@ class ConfigPanelApp(tk.Toplevel):
 
         #设定adb
         row_counter = 0
-        frame_row0 = ttk.Frame(self.main_frame)
-        frame_row0.grid(row=row_counter, column=0, sticky="ew", pady=5)  # 首行框架
-        self.adb_status_label = ttk.Label(frame_row0)
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)  # 首行框架
+        self.adb_status_label = ttk.Label(frame_row)
         self.adb_status_label.grid(row=0, column=0,)
         # 隐藏的Entry用于存储变量
-        adb_entry = ttk.Entry(frame_row0, textvariable=self.emu_path_var)
+        adb_entry = ttk.Entry(frame_row, textvariable=self.emu_path_var)
         adb_entry.grid_remove()
         def selectADB_PATH():
             path = filedialog.askopenfilename(
@@ -127,7 +127,7 @@ class ConfigPanelApp(tk.Toplevel):
                 self.save_config()
         # 浏览按钮
         self.adb_path_change_button = ttk.Button(
-            frame_row0,
+            frame_row,
             text="修改",
             command=selectADB_PATH,
             width = 5,
@@ -142,16 +142,16 @@ class ConfigPanelApp(tk.Toplevel):
         
         self.emu_path_var.trace_add("write", lambda *args: update_adb_status())
         update_adb_status()  # 初始调用
-        ttk.Label(frame_row0, text="端口:").grid(row=0, column=2, sticky=tk.W, pady=5)
+        ttk.Label(frame_row, text="端口:").grid(row=0, column=2, sticky=tk.W, pady=5)
         vcmd_non_neg = self.register(lambda x: ((x=="")or(x.isdigit())))
-        self.adb_port_entry = ttk.Entry(frame_row0,
+        self.adb_port_entry = ttk.Entry(frame_row,
                                         textvariable=self.adb_port_var,
                                         validate="key",
                                         validatecommand=(vcmd_non_neg, '%P'),
                                         width=5)
         self.adb_port_entry.grid(row=0, column=3)
         self.button_save_adb_port = ttk.Button(
-            frame_row0,
+            frame_row,
             text="保存",
             command = self.save_config,
             width=5
@@ -164,10 +164,10 @@ class ConfigPanelApp(tk.Toplevel):
 
         # 地下城目标
         row_counter += 1
-        frame_row2 = ttk.Frame(self.main_frame)
-        frame_row2.grid(row=row_counter, column=0, sticky="ew", pady=5)  # 第二行框架
-        ttk.Label(frame_row2, text="地下城目标:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        self.farm_target_combo = ttk.Combobox(frame_row2, textvariable=self.farm_target_text_var, values=list(DUNGEON_TARGETS.keys()), state="readonly")
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)  # 第二行框架
+        ttk.Label(frame_row, text="地下城目标:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        self.farm_target_combo = ttk.Combobox(frame_row, textvariable=self.farm_target_text_var, values=list(DUNGEON_TARGETS.keys()), state="readonly")
         self.farm_target_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=5)
         self.farm_target_combo.bind("<<ComboboxSelected>>", lambda e: self.save_config())
 
@@ -177,17 +177,17 @@ class ConfigPanelApp(tk.Toplevel):
 
         # 超时设置
         row_counter += 1
-        frame_row6 = ttk.Frame(self.main_frame)
-        frame_row6.grid(row=row_counter, column=0, sticky="ew", pady=5)
-        ttk.Label(frame_row6, text="每轮次超时检查(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.restart_intervel_entry = ttk.Entry(frame_row6,
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)
+        ttk.Label(frame_row, text="每轮次超时检查(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.restart_intervel_entry = ttk.Entry(frame_row,
                                              textvariable=self.restart_intervel_var,
                                              validate="key",
                                              validatecommand=(vcmd_non_neg, '%P'),
                                              width=5)
         self.restart_intervel_entry.grid(row=0, column=2)
         self.button_save_restart_intervel = ttk.Button(
-            frame_row6,
+            frame_row,
             text="保存",
             command = self.save_config,
             width=4
@@ -196,26 +196,26 @@ class ConfigPanelApp(tk.Toplevel):
 
         # 自定义轮数
         row_counter += 1
-        frame_row3 = ttk.Frame(self.main_frame)
-        frame_row3.grid(row=row_counter, column=0, sticky="ew", pady=5)
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)
 
         self.round_custom_check = ttk.Checkbutton(
-            frame_row3,
+            frame_row,
             variable=self.round_custom_var,
             text="使用自定义轮数",
             command=checkcommand,
             style="Custom.TCheckbutton"
             )
         self.round_custom_check.grid(row=0, column=0)
-        ttk.Label(frame_row3, text=" | 轮数:").grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.round_custom_time_entry = ttk.Entry(frame_row3,
+        ttk.Label(frame_row, text=" | 轮数:").grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.round_custom_time_entry = ttk.Entry(frame_row,
                                              textvariable=self.round_custom_time_var,
                                              validate="key",
                                              validatecommand=(vcmd_non_neg, '%P'),
                                              width=5)
         self.round_custom_time_entry.grid(row=0, column=2)
         self.button_save_round_custom = ttk.Button(
-            frame_row3,
+            frame_row,
             text="保存",
             command = self.save_config,
             width=4
@@ -224,17 +224,26 @@ class ConfigPanelApp(tk.Toplevel):
 
         # 绿书
         row_counter += 1
-        frame_row7 = ttk.Frame(self.main_frame)
-        frame_row7.grid(row=row_counter, column=0, sticky="ew", pady=5)
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)
 
         self.use_green_book_check = ttk.Checkbutton(
-            frame_row7,
+            frame_row,
             variable=self.green_book_var,
-            text="尝试使用绿书",
+            text="使用绿书",
             command=checkcommand,
             style="Custom.TCheckbutton"
             )
         self.use_green_book_check.grid(row=0, column=0)
+
+        self.use_green_book_final_check = ttk.Checkbutton(
+            frame_row,
+            variable=self.green_book_final_var,
+            text="只在最后一轮使用绿书",
+            command=checkcommand,
+            style="Custom.TCheckbutton"
+            )
+        self.use_green_book_final_check.grid(row=0, column=1)
 
         # 分割线.
         row_counter += 1
@@ -242,26 +251,26 @@ class ConfigPanelApp(tk.Toplevel):
 
         # 自动放Q技能
         row_counter += 1
-        frame_row5 = ttk.Frame(self.main_frame)
-        frame_row5.grid(row=row_counter, column=0, sticky="ew", pady=5)
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)
 
         self.cast_Q_check = ttk.Checkbutton(
-            frame_row5,
+            frame_row,
             variable=self.cast_q_var,
             text="自动放Q技能",
             command=checkcommand,
             style="Custom.TCheckbutton"
             )
         self.cast_Q_check.grid(row=0, column=0)
-        ttk.Label(frame_row5, text=" | 间隔(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.cast_Q_intervel_entry = ttk.Entry(frame_row5,
+        ttk.Label(frame_row, text=" | 间隔(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.cast_Q_intervel_entry = ttk.Entry(frame_row,
                                              textvariable=self.cast_Q_intervel_var,
                                              validate="key",
                                              validatecommand=(vcmd_non_neg, '%P'),
                                              width=5)
         self.cast_Q_intervel_entry.grid(row=0, column=2)
         self.button_save_cast_Q_intervel = ttk.Button(
-            frame_row5,
+            frame_row,
             text="保存",
             command = self.save_config,
             width=4
@@ -270,45 +279,59 @@ class ConfigPanelApp(tk.Toplevel):
 
         # 自动放E技能
         row_counter += 1
-        frame_row5 = ttk.Frame(self.main_frame)
-        frame_row5.grid(row=row_counter, column=0, sticky="ew", pady=5)
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)
 
         self.cast_E_check = ttk.Checkbutton(
-            frame_row5,
+            frame_row,
             variable=self.cast_e_var,
             text="自动放E技能",
             command=checkcommand,
             style="Custom.TCheckbutton"
             )
         self.cast_E_check.grid(row=0, column=0)
-        ttk.Label(frame_row5, text=" | 间隔(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.cast_intervel_entry = ttk.Entry(frame_row5,
+        ttk.Label(frame_row, text=" | 间隔(秒):").grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.cast_intervel_entry = ttk.Entry(frame_row,
                                              textvariable=self.cast_intervel_var,
                                              validate="key",
                                              validatecommand=(vcmd_non_neg, '%P'),
                                              width=5)
         self.cast_intervel_entry.grid(row=0, column=2)
         self.button_save_cast_intervel = ttk.Button(
-            frame_row5,
+            frame_row,
             text="保存",
             command = self.save_config,
             width=4
             )
         self.button_save_cast_intervel.grid(row=0, column=3)
 
-        # E技能释放
+        # E技能释放扰动
         row_counter += 1
-        frame_row4 = ttk.Frame(self.main_frame)
-        frame_row4.grid(row=row_counter, column=0, sticky="ew", pady=5)
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)
 
         self.cast_E_random_check = ttk.Checkbutton(
-            frame_row4,
+            frame_row,
             variable=self.cast_e_random_var,
             text="释放E时随机扰动",
             command=checkcommand,
             style="Custom.TCheckbutton"
             )
         self.cast_E_random_check.grid(row=0, column=0)
+
+        # E技能内部计时器
+        row_counter += 1
+        frame_row = ttk.Frame(self.main_frame)
+        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)
+
+        self.cast_E_print_check = ttk.Checkbutton(
+            frame_row,
+            variable=self.cast_e_print_var,
+            text="打印内部技能释放计时器",
+            command=checkcommand,
+            style="Custom.TCheckbutton"
+            )
+        self.cast_E_print_check.grid(row=0, column=0)
 
         # 分割线
         self.columnconfigure(0, weight=1)
@@ -403,13 +426,15 @@ class ConfigPanelApp(tk.Toplevel):
             self.restart_intervel_entry,
             self.button_save_restart_intervel,
             self.use_green_book_check,
+            self.use_green_book_final_check,
             self.cast_E_random_check,
             self.round_custom_check,
             self.round_custom_time_entry,
             self.button_save_round_custom,
             self.cast_Q_check,
             self.cast_Q_intervel_entry,
-            self.button_save_cast_Q_intervel
+            self.button_save_cast_Q_intervel,
+            self.cast_E_print_check
             ]
 
         if state == tk.DISABLED:
