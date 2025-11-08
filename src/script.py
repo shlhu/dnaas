@@ -711,6 +711,7 @@ def Factory():
                 logger.info(f"E技能释放计时器: 当前次数:{time.time() - CastESpell.last_cast_time}")
             if time.time() - CastESpell.last_cast_time > setting._CAST_E_INTERVAL:
                 Press([1086,797])
+                CastESpell.last_cast_time = time.time()
 
     def CastQSpell():
         if not hasattr(CastQSpell, 'last_cast_time'):
@@ -822,9 +823,9 @@ def Factory():
         def handle_confirm_and_select_letter(scn):
             if find_nuts:=(CheckIf(scn, "选择密函")) or (CheckIf(scn, "确认选择")):
                 if find_nuts:
-                    Press([925,458])
+                    Press([889,458])
                     Sleep(0.2)
-                    Press([925,458])
+                    Press([889,458])
                     Sleep(0.2)
                 Press(CheckIf(scn,"确认选择"))
                 return True
