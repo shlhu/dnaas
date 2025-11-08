@@ -123,7 +123,7 @@ def KillAdb(setting : FarmConfig):
     
 def KillEmulator(setting : FarmConfig):
     emulator_name = os.path.basename(setting._EMUPATH)
-    emulator_headless = "MuMuVMMHeadless.exe"
+    emulator_SVC = "MuMuVMMSVC.exe"
     try:
         logger.info(f"正在检查并关闭已运行的模拟器实例{emulator_name}...")
         # Windows 系统使用 taskkill 命令
@@ -137,7 +137,7 @@ def KillEmulator(setting : FarmConfig):
             )
             time.sleep(1)
             subprocess.run(
-                f"taskkill /f /im {emulator_headless}", 
+                f"taskkill /f /im {emulator_SVC}", 
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -691,14 +691,17 @@ def Factory():
             Sleep(1)
 
     def QuitDungeon():
-        FindCoordsOrElseExecuteFallbackAndWait(["放弃挑战","放弃挑战_云","再次进行"],[50,40],2)
-        scn = ScreenShot()
-        if CheckIf(scn,"放弃挑战") or CheckIf(scn,"放弃挑战_云"):
-            Press(FindCoordsOrElseExecuteFallbackAndWait("确定",["放弃挑战","放弃挑战_云"],2))
-            Sleep(2)
-            return 
-        if CheckIf(scn, "再次进行"):
-            return 
+        try:
+            FindCoordsOrElseExecuteFallbackAndWait(["放弃挑战","放弃挑战_云","再次进行"],[50,40],2)
+            scn = ScreenShot()
+            if CheckIf(scn,"放弃挑战") or CheckIf(scn,"放弃挑战_云"):
+                Press(FindCoordsOrElseExecuteFallbackAndWait("确定",["放弃挑战","放弃挑战_云"],2))
+                Sleep(2)
+                return 
+            if CheckIf(scn, "再次进行"):
+                return
+        except:
+            return
 
     def CastESpell():
         nonlocal runtimeContext
@@ -821,7 +824,7 @@ def Factory():
             return False
         @register
         def handle_confirm_and_select_letter(scn):
-            if find_nuts:=(CheckIf(scn, "选择密函")) or (CheckIf(scn, "确认选择")):
+            if (find_nuts:=CheckIf(scn, "选择密函")) or (CheckIf(scn, "确认选择")):
                 if find_nuts:
                     Press([889,458])
                     Sleep(0.2)
@@ -1188,12 +1191,12 @@ def Factory():
                         DoubleJump()
                         GoForward(1000)
                         unlock = False
-                        if QuickUnlock():
-                            unlock = True
-                        else:
-                            GoBack(1000)
+                        for _ in range(5):
                             if QuickUnlock():
                                 unlock = True
+                                break
+                            else:
+                                GoBack(50)
                         if unlock:
                             ResetPosition()
                             GoLeft(round((4-2/60)*1000))
