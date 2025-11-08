@@ -31,7 +31,6 @@ CONFIG_VAR_LIST = [
             ["restart_intervel_var",        tk.IntVar,     "_RESTART_INTERVAL",          2000],
             ["green_book_var",              tk.BooleanVar, "_GREEN_BOOK",                False],
             ["green_book_final_var",        tk.BooleanVar, "_GREEN_BOOK_FINAL",          False],
-            ["cast_e_random_var",           tk.BooleanVar, "_CAST_E_RANDOM",             False],
             ["round_custom_var",            tk.BooleanVar, "_ROUND_CUSTOM_ACTIVE",       False],
             ["round_custom_time_var",       tk.IntVar,     "_ROUND_CUSTOM_TIME",         3],
             ["cast_q_var",                  tk.BooleanVar, "_CAST_Q_ABILITY",            False],
@@ -421,6 +420,11 @@ def Factory():
                     logger.error("OpenCV解码失败：图像数据损坏")
                     raise RuntimeError("图像解码失败")
 
+                if image.shape != (900, 1600, 3):  # OpenCV格式为(高, 宽, 通道)
+                    logger.error(f"截图尺寸异常! 当前{image.shape}, 应为(1600,900). 请检查并修改模拟器分辨率!")
+                    Sleep(5)
+                    raise ValueError("截图尺寸异常")
+
                 #cv2.imwrite('screen.png', image)
                 return image
             except Exception as e:
@@ -701,24 +705,12 @@ def Factory():
         if not hasattr(CastESpell, 'last_cast_time'):
             CastESpell.last_cast_time = 0
         PROB = [1,0.30210303,0.14445311,0.08474409,0.05570346,0.03936413,0.0290976,0.02201336,0.01675358,0.01263117,0.00926888,0.00644352,0.0040144,0.00188813,0]
-        if setting._CAST_E_RANDOM:
-            if setting._CAST_E_ABILITY:
-                prob_setting = PROB[setting._CAST_E_INTERVAL-1] if setting._CAST_E_INTERVAL<=15 and setting._CAST_E_INTERVAL >=1 else 1
-                leap = round(time.time()-CastESpell.last_cast_time)
-                threshold = (prob_setting * leap) if leap <15 else 1
-                this_roll = random.random()
-                if setting._CAST_E_PRINT:
-                    logger.info(f"E技能释放计时器: 当前次数:{round(time.time()-CastESpell.last_cast_time)} Roll点:{this_roll:.2f} 阈值:{threshold:.2f}")
-                if this_roll <= threshold:
-                    CastESpell.last_cast_time = time.time()
-                    Press([1086,797])
 
-        else:
-            if setting._CAST_E_ABILITY:
-                if setting._CAST_E_PRINT:
-                    logger.info(f"E技能释放计时器: 当前次数:{time.time() - CastESpell.last_cast_time}")
-                if time.time() - CastESpell.last_cast_time > setting._CAST_E_INTERVAL:
-                    Press([1086,797])
+        if setting._CAST_E_ABILITY:
+            if setting._CAST_E_PRINT:
+                logger.info(f"E技能释放计时器: 当前次数:{time.time() - CastESpell.last_cast_time}")
+            if time.time() - CastESpell.last_cast_time > setting._CAST_E_INTERVAL:
+                Press([1086,797])
 
     def CastQSpell():
         if not hasattr(CastQSpell, 'last_cast_time'):
@@ -766,6 +758,8 @@ def Factory():
         NL_total_time = 0
         NL_game_prepare = False
         NL_game_counter = 0
+        if setting._ROUND_CUSTOM_ACTIVE:
+            DEFAULTWAVE = setting._ROUND_CUSTOM_TIME
     
         ########################################
         handlers = []
@@ -1192,7 +1186,14 @@ def Factory():
                         GoForward(round((3.5+16/60)*1000))
                         DoubleJump()
                         GoForward(1000)
+                        unlock = False
                         if QuickUnlock():
+                            unlock = True
+                        else:
+                            GoBack(1000)
+                            if QuickUnlock():
+                                unlock = True
+                        if unlock:
                             ResetPosition()
                             GoLeft(round((4-2/60)*1000))
                             for i in range(20):
@@ -1209,7 +1210,7 @@ def Factory():
                                 ResetPosition()
                                 Sleep(3)
                                 scn = ScreenShot()
-                                if CheckIf(scn,"调停_A", [[0,535,544,899-535]]):
+                                if CheckIf(scn,"调停_A", [[0,535,544,899-535]]) or CheckIf(scn,"调停_A_云", [[0,535,544,899-535]]):
                                     GoRight(round((3-2/60)*1000))
                                     GoForward(round((2+30/60)*1000))
                                     GoRight(round((4-56/60)*1000))
@@ -1218,7 +1219,7 @@ def Factory():
                                     GoForward(round((9+44/60)*1000))
                                     GoRight(round((9-14/60)*1000))
                                     continue
-                                if CheckIf(scn,"调停_B", [[0,535,544,899-535]]):
+                                if CheckIf(scn,"调停_B", [[0,535,544,899-535]]) or CheckIf(scn,"调停_B_云", [[0,535,544,899-535]]):
                                     GoForward(round((1+40/60)*1000))
                                     GoRight(round((14-36/60)*1000))
                                     GoForward(round((6+24/60)*1000))

@@ -305,20 +305,6 @@ class ConfigPanelApp(tk.Toplevel):
             )
         self.button_save_cast_intervel.grid(row=0, column=3)
 
-        # E技能释放扰动
-        row_counter += 1
-        frame_row = ttk.Frame(self.main_frame)
-        frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)
-
-        self.cast_E_random_check = ttk.Checkbutton(
-            frame_row,
-            variable=self.cast_e_random_var,
-            text="释放E时随机扰动",
-            command=checkcommand,
-            style="Custom.TCheckbutton"
-            )
-        self.cast_E_random_check.grid(row=0, column=0)
-
         # E技能内部计时器
         row_counter += 1
         frame_row = ttk.Frame(self.main_frame)
@@ -427,7 +413,6 @@ class ConfigPanelApp(tk.Toplevel):
             self.button_save_restart_intervel,
             self.use_green_book_check,
             self.use_green_book_final_check,
-            self.cast_E_random_check,
             self.round_custom_check,
             self.round_custom_time_entry,
             self.button_save_round_custom,
