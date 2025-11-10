@@ -159,9 +159,10 @@ class ConfigPanelApp(tk.Toplevel):
 
         # 地下城目标
         def UpdateLvlCombo(*args):
-            self.farm_target_lvl_combo['value'] = list(DUNGEON_TARGETS[self.farm_type_var.get()].keys())
-            if self.farm_target_lvl_combo['values'] and (self.farm_lvl_var.get() not in self.farm_target_lvl_combo['values']):
-                self.farm_lvl_var.set(self.farm_target_lvl_combo['values'][0])
+            if self.farm_type_var.get() in DUNGEON_TARGETS.keys():
+                self.farm_target_lvl_combo['value'] = list(DUNGEON_TARGETS[self.farm_type_var.get()].keys())
+                if self.farm_target_lvl_combo['values'] and (self.farm_lvl_var.get() not in self.farm_target_lvl_combo['values']):
+                    self.farm_lvl_var.set(self.farm_target_lvl_combo['values'][0])
         row_counter += 1
         frame_row = ttk.Frame(self.main_frame)
         frame_row.grid(row=row_counter, column=0, sticky="ew", pady=5)  # 第二行框架

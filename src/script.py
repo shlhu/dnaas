@@ -19,8 +19,8 @@ DUNGEON_TARGETS = {
     "角色材料": {"10":1, "30":3, "60":6},
     "武器突破": {"60":5, "70":6},
     "皎皎币":   {"60":3,"70":4},
-    "夜航手册": {"40":3,"55":5, "60":6,"65":7,"70":8},
-    "半自动(开核桃)": {"驱离":0, "原地挂机":0}
+    "夜航手册": {"40":3,"50":4,"55":5, "60":6,"65":7,"70":8},
+    "开核桃": {"驱离":0, "生存":0, "无巧手生存":0}
     }
 DUNGEON_EXTRA = ["无关心","1","2","3","4","5","6","7","8","9"]
 
@@ -663,6 +663,31 @@ def Factory():
             Sleep()
             restartGame()
             return None # restartGame会抛出异常 所以直接返回none就行了
+    def BasicStateList(always_do_before, check_list, normal_quit, always_do_after, alarm_list):
+        counter = 0
+        while True:
+            always_do_before()
+
+            for checkif, thendo in check_list:
+                findsth = False
+                if checkif():
+                    thendo()
+                    findsth = True
+                    break
+
+            if normal_quit():
+                return
+            
+            if findsth:
+                counter = 0
+                continue
+
+            counter+=1 
+            for checkcounter, alarm in alarm_list:
+                if counter >= checkcounter:
+                    if alarm():
+                        return
+            always_do_after()
     def restartGame(skipScreenShot = False):
         nonlocal runtimeContext
         runtimeContext._COMBATSPD = False # 重启会重置2倍速, 所以重置标识符以便重新打开.
@@ -690,11 +715,15 @@ def Factory():
         if "com.hero.dna.gf.yun.game" in packageList:
             package_name = "com.hero.dna.gf.yun.game"
             logger.info("有云游戏, 优先启动云游戏.")
-            waittime = 15
+            waittime = 25
+        elif "com.panstudio.gplay.duetnightabyss.arpg.global" in packageList:
+            package_name = "com.panstudio.gplay.duetnightabyss.arpg.global"
+            logger.info("是港澳台/国际服.")
+            waittime = 40
         else:
             package_name = "com.hero.dna.gf" # "com.hero.dna.gf.yun.game"
             logger.info("准备启动游戏.")
-            waittime = 30
+            waittime = 40
         mainAct = DeviceShell(f"cmd package resolve-activity --brief {package_name}").strip().split('\n')[-1]
         DeviceShell(f"am force-stop {package_name}")
         Sleep(2)
@@ -825,6 +854,9 @@ def Factory():
     def QuickUnlock():
         Sleep(1)
         scn = ScreenShot()
+        if Press(CheckIf(scn,"启动升降机")):
+            Sleep(14)
+            return True
         if Press(CheckIf(scn,"操作")) or Press(CheckIf(scn,"暴露引信")):
             Sleep(2)
             scn = ScreenShot()
@@ -857,7 +889,11 @@ def Factory():
             Sleep(0.5)
     ##################################################################
     def BasicQuestSelect():
-        if setting._FARM_TYPE != "夜航手册":
+        if setting._FARM_TYPE == "开核桃":
+            logger.info("错误: 开核桃模式无法自动选择任务. 取消执行.")
+            setting._FORCESTOPING.set()
+            return 
+        elif setting._FARM_TYPE != "夜航手册":
             FindCoordsOrElseExecuteFallbackAndWait("开始挑战",[setting._FARM_TYPE,"input swipe 1400 400 1300 400"],2)
             roi = [50,182+57*(DUNGEON_TARGETS[setting._FARM_TYPE][setting._FARM_LVL]-1),275,57]
             scn = ScreenShot()
@@ -869,10 +905,13 @@ def Factory():
             else:
                 return # 错误. 退出.
             if setting._FARM_TYPE == "角色材料":
-                if (setting._FARM_EXTRA == "无关心") or (setting._FARM_EXTRA == 2):
-                    FindCoordsOrElseExecuteFallbackAndWait("无尽火",[1187,778],1)
+                mat_elem = {1: "无尽水",2: "无尽火",3:"无尽风",4:"无尽雷",5:"无尽光",6: "无尽暗"}
+                if (setting._FARM_EXTRA == "无关心"):
+                    select = 2
                 else:
-                    logger.info("其他材料本还不支持噢.")
+                    select = int(setting._FARM_EXTRA)
+                logger.info(f"由于额外参数为\"{setting._FARM_EXTRA}\",刷取对象为{mat_elem[select]}")
+                FindCoordsOrElseExecuteFallbackAndWait(mat_elem[select],[1020+83*select,778],1)
         else:
             FindCoordsOrElseExecuteFallbackAndWait("前往","夜航手册",1)
             lvl = DUNGEON_TARGETS[setting._FARM_TYPE][setting._FARM_LVL]
@@ -900,7 +939,7 @@ def Factory():
 
     def resetMove():
         match setting._FARM_TYPE+setting._FARM_LVL:
-            case "夜航手册40" | "夜航手册55" | "夜航手册60" | "半自动(开核桃)驱离":
+            case "夜航手册40" | "夜航手册55" | "夜航手册60" | "开核桃驱离":
                 GoForward(15000)
                 GoBack(1000)
                 GoLeft(100)
@@ -980,16 +1019,49 @@ def Factory():
                 if not ResetPosition():
                     return False
                 return True
+            case "夜航手册50":
+                if CheckIf(ScreenShot(), "保护目标", [[693,212,109,110]]):
+                    GoForward(9600)
+                    GoRight(2850)
+                    GoForward(3000)
+                    GoLeft(1800)
+                    GoForward(3000)
+                    GoLeft(1550)
+                    GoForward(2000)
+                    if not ResetPosition():
+                        return False
+                    GoForward(10000)
+                    AUTOCalibration()
+                    GoForward(5000)
+                    return True
+                if CheckIf(ScreenShot(), "保护目标", [[764,217,80,96]]):
+                    GoForward(5000)
+                    Sleep(1)
+                    if CheckIf(ScreenShot(), "保护目标", [[745,175,126,92]]): # 电梯
+                        GoForward(round((3-4/60)*1000))
+                        if QuickUnlock():
+                            GoForward(round((18+18/60)*1000))
+                            return True
+                        return False
+                    if CheckIf(ScreenShot(), "保护目标", [[745,266,126,94]]): # 平台
+                        GoRight(round((1+14/60)*1000))
+                        GoForward(round((2+42/60)*1000))
+                        GoLeft(round((2+30/60)*1000))
+                        GoForward(round((4+42/60)*1000))
+                        GoRight(round((1+28/60)*1000))
+                        GoForward(round((15+54/60)*1000))
+                        return True
+                    return False
             case "角色经验50":
                 if CheckIf(ScreenShot(), "保护目标", [[693,212,109,110]]):
                     GoForward(9600)
                     GoLeft(400)
                     if QuickUnlock():
-                        GoLeft(3450)
+                        GoRight(3250)
                         GoForward(3000)
-                        GoRight(2000)
+                        GoLeft(1800)
                         GoForward(3000)
-                        GoRight(1150)
+                        GoLeft(1550)
                         GoForward(2000)
                         if not ResetPosition():
                             return False
@@ -999,7 +1071,16 @@ def Factory():
                         GoBack(5000)
                         if not ResetPosition():
                             return False
-                        Sleep(3)
+                        for i in range(setting._RESTART_INTERVAL):
+                            if CheckIf(ScreenShot(), "可前往撤离点"):
+                                break
+                            else:
+                                CastQOnce()
+                                CastESpell()
+                                CastQSpell()
+                                Sleep(1)
+                            if i == setting._RESTART_INTERVAL - 1:
+                                return False
                         GoLeft(4000)
                         DoubleJump()
                         GoLeft(1000)
@@ -1009,7 +1090,7 @@ def Factory():
                         GoLeft(200)
                         return True
                 return False
-            case "角色材料10":
+            case "角色材料10" :
                 if not ResetPosition():
                     return False
                 Sleep(3)
@@ -1019,7 +1100,7 @@ def Factory():
                         GoRight(800)
                         return True
                 return False
-            case "角色材料30" | "角色材料60":
+            case "角色材料30" | "角色材料60" | "开核桃生存":
                 if not ResetPosition():
                     return False
                 GoLeft(9150)
@@ -1082,7 +1163,13 @@ def Factory():
                             if not ResetPosition():
                                 return False
                             Sleep(3)
-                            k = InverseDistanceWeighting(*CalculRoIAverRGB(ScreenShot(),[[0,535,544,899-535]]))
+                            if CheckIf(scn,"撤离点",[[708,394,145,182]]):
+                                AUTOCalibration([[634,394,350,159]])
+                                GoForward(round((24-4/60)*1000))
+                                if CheckIf(ScreenShot(),"再次进行"):
+                                    return True
+                                continue
+                            k = InverseDistanceWeighting(*CalculRoIAverRGB(scn,[[0,535,544,899-535]]))
                             if k == 'A':
                                 GoRight(round((3-2/60)*1000))
                                 GoForward(round((2+30/60)*1000))
@@ -1093,13 +1180,13 @@ def Factory():
                                 GoRight(round((9-14/60)*1000))
                                 continue
                             if k == 'B':
-                                GoForward(round((1+20/60)*1000))
+                                GoForward(round((1+0/60)*1000))
                                 GoRight(round((14-56/60)*1000))
                                 GoForward(round((6+24/60)*1000))
                                 GoLeft(round((4-54/60)*1000))
-                                GoForward(round((8-10/60)*1000))
+                                GoForward(round((4-10/60)*1000))
                                 if AUTOCalibration([[634,394,350,159]]):
-                                    GoForward(round((20-4/60)*1000))
+                                    GoForward(round((24-4/60)*1000))
                                     if CheckIf(ScreenShot(),"再次进行"):
                                         return True
                                 continue
@@ -1107,12 +1194,19 @@ def Factory():
             case _ :
                 logger.info("没有设定开场移动. 原地挂机.")
                 return True
+    ################################################################
     def QuestFarm():
         NL_in_game_counter = 1
         NL_start_time = time.time()
         NL_total_time = 0
         NL_game_prepare = False
         NL_game_counter = 0
+
+        if (setting._FARM_TYPE not in DUNGEON_TARGETS.keys()) or (setting._FARM_LVL not in DUNGEON_TARGETS[setting._FARM_TYPE].keys()):
+            logger.info("\n\n任务列表已更新! 请重新手动选择地下城任务!\n\n")
+            setting._FINISHINGCALLBACK()
+            return
+
         if setting._ROUND_CUSTOM_ACTIVE:
             DEFAULTWAVE = setting._ROUND_CUSTOM_TIME
         else:
@@ -1322,7 +1416,7 @@ def Factory():
                 logger.debug(f"定位中, 尝试次数:{check_counter}/20")
             if check_counter >= 5:
                 logger.info(f"定位中, 尝试次数:{check_counter}/20")
-                if ("dna" not in DeviceShell("dumpsys window | grep mCurrentFocus")):
+                if ("dna" not in DeviceShell("dumpsys window | grep mCurrentFocus")) and ("duetnightabyss" not in DeviceShell("dumpsys window | grep mCurrentFocus")) :
                     logger.info("游戏未启动, 尝试启动.")
                     try:
                         restartGame(skipScreenShot = True)
