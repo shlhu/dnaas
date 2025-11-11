@@ -720,10 +720,13 @@ def Factory():
             package_name = "com.panstudio.gplay.duetnightabyss.arpg.global"
             logger.info("是港澳台/国际服.")
             waittime = 40
-        else:
+        elif "com.hero.dna.gf" in packageList:
             package_name = "com.hero.dna.gf" # "com.hero.dna.gf.yun.game"
             logger.info("准备启动游戏.")
             waittime = 40
+        else:
+            logger.info("你究竟再用什么版本再玩? 重启不了, 告辞.")
+            return
         mainAct = DeviceShell(f"cmd package resolve-activity --brief {package_name}").strip().split('\n')[-1]
         DeviceShell(f"am force-stop {package_name}")
         Sleep(2)
@@ -752,7 +755,9 @@ def Factory():
             FindCoordsOrElseExecuteFallbackAndWait("确定",["复位角色","复位角色_云"],1)
             while pos:=CheckIf(ScreenShot(),'确定'):
                 Press(pos)
-            Sleep(2)
+            Sleep(3)
+            if not CheckIfInDungeon(ScreenShot()):
+                Sleep(3)
             return True
         except Exception as e:
             logger.info(e)
@@ -842,6 +847,7 @@ def Factory():
             if not runtimeContext._CASTED_Q:
                 Press([1205,779])
                 Sleep(2)
+                runtimeContext._CASTED_Q = True
     def CheckIfInDungeon(scn = None):
         if scn is None:
             scn = ScreenShot()
@@ -1081,6 +1087,8 @@ def Factory():
                                 Sleep(1)
                             if i == setting._RESTART_INTERVAL - 1:
                                 return False
+                        if not ResetPosition():
+                            return False
                         GoLeft(4000)
                         DoubleJump()
                         GoLeft(1000)
@@ -1180,7 +1188,8 @@ def Factory():
                                 GoRight(round((9-14/60)*1000))
                                 continue
                             if k == 'B':
-                                GoForward(round((1+0/60)*1000))
+                                GoForward(200)
+                                GoForward(800)
                                 GoRight(round((14-56/60)*1000))
                                 GoForward(round((6+24/60)*1000))
                                 GoLeft(round((4-54/60)*1000))
@@ -1209,6 +1218,7 @@ def Factory():
 
         if setting._ROUND_CUSTOM_ACTIVE:
             DEFAULTWAVE = setting._ROUND_CUSTOM_TIME
+            logger.info(f"已设置自定义轮数, 每次将刷取{DEFAULTWAVE}轮次.")
         else:
             match setting._FARM_TYPE+setting._FARM_LVL:
                 case "皎皎币60":
@@ -1382,11 +1392,7 @@ def Factory():
         ########################################
 
         check_counter = 0
-        round_time = time.time()
-
-        if setting._ROUND_CUSTOM_ACTIVE:
-            MAX_TURN = setting._ROUND_CUSTOM_TIME
-            logger.info(f"已设置自定义轮数, 每次将刷取{MAX_TURN}轮次.")
+        round_time = time.time()            
 
         while 1:
             if setting._FORCESTOPING.is_set():
