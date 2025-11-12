@@ -61,14 +61,18 @@ jobs:
       run: |
         # Copy changelog into the build directory before zipping
         Copy-Item -Path './CHANGES_LOG.md' -Destination './dist/dnaas/' -Force
-        Compress-Archive -Path ./dist/dnaas/* -DestinationPath ./dist/dnaas.zip -Force
-        Get-ChildItem dist/dnaas.zip
+        $zipName = "dnaas_v${{ steps.extract-version.outputs.version }}.zip"
+        Compress-Archive -Path ./dist/dnaas/* -DestinationPath "./dist/$zipName" -Force
+        Write-Host "ZIP file created: $zipName"
+        Get-ChildItem dist/*.zip
 
     - name: Prepare Release Notes and Metadata
       id: prepare-release-meta
       shell: pwsh
       run: |
-        $md5 = (Get-FileHash -Path dist/dnaas.zip -Algorithm MD5).Hash.ToLower()
+        $zipName = "dnaas_v${{ steps.extract-version.outputs.version }}.zip"
+        $zipPath = "dist/$zipName"
+        $md5 = (Get-FileHash -Path $zipPath -Algorithm MD5).Hash.ToLower()
         echo "md5=$md5" >> $env:GITHUB_OUTPUT
         echo "MD5: $md5"
         
@@ -84,7 +88,7 @@ jobs:
           version = $version
           md5 = $md5
           release_date = $date
-          download_url = "https://github.com/${{ github.repository }}/releases/download/$version/dnaas.zip"
+          download_url = "https://github.com/${{ github.repository }}/releases/download/$version/$zipName"
           release_notes = "https://github.com/${{ github.repository }}/releases/tag/$version"
         } | ConvertTo-Json
 
@@ -98,7 +102,7 @@ jobs:
         tag_name: ${{ steps.extract-version.outputs.version }}
         name: Release ${{ steps.extract-version.outputs.version }}
         body_path: dist/release_notes.md
-        files: dist/dnaas.zip
+        files: dist/dnaas_v${{ steps.extract-version.outputs.version }}.zip
 
     - name: Force set as prerelease
       if: ${{ steps.extract-version.outputs.is_prerelease == 'true' }}
