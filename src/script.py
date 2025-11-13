@@ -19,8 +19,8 @@ DUNGEON_TARGETS = {
     "角色材料": {"10":1, "30":3, "60":6},
     "武器突破": {"60":5, "70":6},
     "皎皎币":   {"60":3,"70":4},
-    "夜航手册": {"40":3,"50":4,"55":5, "60":6,"65":7,"70":8},
-    # "mod强化": {"60":3},
+    "夜航手册": {"30":2, "40":3,"50":4,"55":5, "60":6,"65":7,"70":8},
+    "mod强化": {"60":4},
     "开密函": {"驱离":0, "探险无尽":0, "无巧手探险无尽":0},
     # "钓鱼": {"无悠闲":0}
     }
@@ -94,7 +94,7 @@ def KillAdb(setting : FarmConfig):
         # Windows 系统使用 taskkill 命令
         if os.name == 'nt':
             subprocess.run(
-                f"taskkill /f /im adb.exe", 
+                f"taskkill /f /im adb.exe",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -102,7 +102,7 @@ def KillAdb(setting : FarmConfig):
             )
             time.sleep(1)
             subprocess.run(
-                f"taskkill /f /im HD-Adb.exe", 
+                f"taskkill /f /im HD-Adb.exe",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -110,7 +110,7 @@ def KillAdb(setting : FarmConfig):
             )
         else:
             subprocess.run(
-                f"pkill -f {adb_path}", 
+                f"pkill -f {adb_path}",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -119,7 +119,7 @@ def KillAdb(setting : FarmConfig):
         logger.info(f"已尝试终止adb")
     except Exception as e:
         logger.error(f"终止模拟器进程时出错: {str(e)}")
-    
+
 def KillEmulator(setting : FarmConfig):
     emulator_name = os.path.basename(setting._EMUPATH)
     emulator_SVC = "MuMuVMMSVC.exe"
@@ -128,7 +128,7 @@ def KillEmulator(setting : FarmConfig):
         # Windows 系统使用 taskkill 命令
         if os.name == 'nt':
             subprocess.run(
-                f"taskkill /f /im {emulator_name}", 
+                f"taskkill /f /im {emulator_name}",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -136,7 +136,7 @@ def KillEmulator(setting : FarmConfig):
             )
             time.sleep(1)
             subprocess.run(
-                f"taskkill /f /im {emulator_SVC}", 
+                f"taskkill /f /im {emulator_SVC}",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -147,14 +147,14 @@ def KillEmulator(setting : FarmConfig):
         # Unix/Linux 系统使用 pkill 命令
         else:
             subprocess.run(
-                f"pkill -f {emulator_name}", 
+                f"pkill -f {emulator_name}",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False
             )
             subprocess.run(
-                f"pkill -f {emulator_headless}", 
+                f"pkill -f {emulator_headless}",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -172,15 +172,15 @@ def StartEmulator(setting):
     try:
         logger.info(f"启动模拟器: {hd_player_path}")
         subprocess.Popen(
-            hd_player_path, 
+            hd_player_path,
             shell=True,
-            stdout=subprocess.DEVNULL, 
+            stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             cwd=os.path.dirname(hd_player_path))
     except Exception as e:
         logger.error(f"启动模拟器失败: {str(e)}")
         return False
-    
+
     logger.info("等待模拟器启动...")
     time.sleep(15)
 def GetADBPath(setting):
@@ -191,7 +191,7 @@ def GetADBPath(setting):
     if not os.path.exists(adb_path):
         logger.error(f"adb程序序不存在: {adb_path}")
         return None
-    
+
     return adb_path
 
 def CMDLine(cmd):
@@ -211,13 +211,13 @@ def CheckRestartConnectADB(setting: FarmConfig):
             KillAdb(setting)
 
             # 我们不起手就关, 但是如果2次链接还是尝试失败, 那就触发一次强制重启.
-        
+
         try:
             logger.info("检查adb服务...")
             result = CMDLine(f"\"{adb_path}\" devices")
             logger.debug(f"adb链接返回(输出信息):{result.stdout}")
             logger.debug(f"adb链接返回(错误信息):{result.stderr}")
-            
+
             if ("daemon not running" in result.stderr) or ("offline" in result.stdout):
                 logger.info("adb服务未启动!\n启动adb服务...")
                 CMDLine(f"\"{adb_path}\" kill-server")
@@ -228,7 +228,7 @@ def CheckRestartConnectADB(setting: FarmConfig):
             result = CMDLine(f"\"{adb_path}\" connect 127.0.0.1:{setting._ADBPORT}")
             logger.debug(f"adb链接返回(输出信息):{result.stdout}")
             logger.debug(f"adb链接返回(错误信息):{result.stderr}")
-            
+
             if result.returncode == 0 and ("connected" in result.stdout or "already" in result.stdout):
                 logger.info("成功连接到模拟器")
                 break
@@ -262,7 +262,7 @@ def CheckRestartConnectADB(setting: FarmConfig):
     try:
         client = AdbClient(host="127.0.0.1", port=5037)
         devices = client.devices()
-        
+
         # 查找匹配的设备
         target_device = f"127.0.0.1:{setting._ADBPORT}"
         for device in devices:
@@ -271,7 +271,7 @@ def CheckRestartConnectADB(setting: FarmConfig):
                 return device
     except Exception as e:
         logger.error(f"获取ADB设备时出错: {e}")
-    
+
     return None
 ##################################################################
 def CalculRoIAverRGB(screenshot, roi=None):
@@ -284,7 +284,7 @@ def CalculRoIAverRGB(screenshot, roi=None):
         else:  # 灰度图像
             avg = np.mean(screenshot)
             return (avg, avg, avg)
-    
+
     img_height, img_width = screenshot.shape[:2]
     roi_copy = roi.copy()
 
@@ -316,14 +316,14 @@ def CalculRoIAverRGB(screenshot, roi=None):
         if roi2_x_start < roi2_x_end and roi2_y_start < roi2_y_end:
             exclude_mask = np.zeros((img_height, img_width), dtype=bool)
             exclude_mask[roi2_y_start:roi2_y_end, roi2_x_start:roi2_x_end] = True
-            
+
             # 从基础掩码中排除这个区域
             final_mask = final_mask & ~exclude_mask
 
     # 检查是否有有效的净区域
     if not np.any(final_mask):
         return (0, 0, 0)
-    
+
     # 计算净区域的平均RGB值
     if len(screenshot.shape) == 3:  # 彩色图像
         roi_pixels = screenshot[final_mask]
@@ -391,8 +391,8 @@ def Factory():
         else:
             logger.error("任务列表已更新.请重新手动选择地下城任务.")
             return
-        
-        
+
+
         # 创建 Quest 实例并填充属性
         quest = FarmQuest()
         for key, value in data.items():
@@ -404,7 +404,7 @@ def Factory():
                 pass
             else:
                 logger.info(f"'{key}'并不存在于FarmQuest中.")
-        
+
         if 'extraConfig' in data and isinstance(data['extraConfig'], dict):
             for key, value in data['extraConfig'].items():
                 if hasattr(setting, key):
@@ -425,7 +425,7 @@ def Factory():
             exception = None
             result = None
             completed = Event()
-            
+
             def adb_command_thread():
                 nonlocal exception, result
                 try:
@@ -434,25 +434,25 @@ def Factory():
                     exception = e
                 finally:
                     completed.set()
-            
+
             thread = Thread(target=adb_command_thread)
             thread.daemon = True
             thread.start()
-            
+
             try:
                 if not completed.wait(timeout=7):
                     # 线程超时未完成
                     logger.warning(f"ADB命令执行超时: {cmdStr}")
                     raise TimeoutError(f"ADB命令在{7}秒内未完成")
-                
+
                 if exception is not None:
                     raise exception
-                    
+
                 return result
             except (TimeoutError, RuntimeError, ConnectionResetError, cv2.error) as e:
                 logger.warning(f"ADB操作失败 ({type(e).__name__}): {e}")
                 logger.info("尝试重启ADB服务...")
-                
+
                 ResetADBDevice()
                 time.sleep(1)
 
@@ -461,7 +461,7 @@ def Factory():
                 # 非预期异常直接抛出
                 logger.error(f"非预期的ADB异常: {type(e).__name__}: {e}")
                 raise
-    
+
     def Sleep(t=1):
         time.sleep(t)
     def ScreenShot():
@@ -597,8 +597,13 @@ def Factory():
         nonlocal runtimeContext
         if runtimeContext._IMPORTANTINFO == "":
             runtimeContext._IMPORTANTINFO = "👆向上滑动查看重要信息👆\n"
-        time_str = datetime.now().strftime("%Y%m%d-%H%M%S") 
+        time_str = datetime.now().strftime("%Y%m%d-%H%M%S")
         runtimeContext._IMPORTANTINFO = f"{time_str} {str}\n{runtimeContext._IMPORTANTINFO}"
+    def SaveDebugImage(extraName = None):
+        if extraName:
+            cv2.imwrite(f"DEBUG_{extraName}_{time.time()}.png", ScreenShot())
+        else:
+            cv2.imwrite(f"DEBUG_{time.time()}.png", ScreenShot())
     ##################################################################
     def FindCoordsOrElseExecuteFallbackAndWait(targetPattern, fallback,waitTime):
         # fallback可以是坐标[x,y]或者字符串. 当为字符串的时候, 视为图片地址
@@ -668,12 +673,12 @@ def Factory():
 
             if normal_quit():
                 return
-            
+
             if findsth:
                 counter = 0
                 continue
 
-            counter+=1 
+            counter+=1
             for checkcounter, alarm in alarm_list:
                 if counter >= checkcounter:
                     if alarm():
@@ -759,12 +764,12 @@ def Factory():
         else:
             DeviceShell(f"input swipe 0 698 0 698 {SPLIT}")
             GoLeft(time-SPLIT)
-    
+
     def DoubleJump():
         Press([1359,478])
         Sleep(0.5)
         Press([1359,478])
-            
+
     def GoRight(time = 1000):
         SPLIT = 3000
         if time <= SPLIT:
@@ -800,7 +805,7 @@ def Factory():
             if CheckIf(scn,"放弃挑战") or CheckIf(scn,"放弃挑战_云"):
                 Press(FindCoordsOrElseExecuteFallbackAndWait("确定",["放弃挑战","放弃挑战_云"],2))
                 Sleep(10)
-                return 
+                return
             if CheckIf(scn, "再次进行"):
                 return
         except:
@@ -838,29 +843,36 @@ def Factory():
                 Press([1205,779])
                 Sleep(2)
                 runtimeContext._CASTED_Q = True
-    def CastDoubleJump():
+    def CastNothingTodo():
         if not setting._CAST_Q_ONCE:
             if not setting._CAST_Q_ABILITY:
                 if not setting._CAST_E_ABILITY:
-                    if not hasattr(CastDoubleJump, 'last_cast_time'):
-                        CastDoubleJump.last_cast_time = 0
-                    if time.time() - CastDoubleJump.last_cast_time > 20:
+                    if not hasattr(CastNothingTodo, 'last_cast_time'):
+                        CastNothingTodo.last_cast_time = 0
+                    if time.time() - CastNothingTodo.last_cast_time > 20:
                         logger.info("呃, 什么都不干可不行, 会被踢出去的.")
                         Press([1203,631])
                         Sleep(1)
                         Press([1097,658])
                         Sleep(1)
                         DoubleJump()
-                        CastDoubleJump.last_cast_time = time.time()
+                        CastNothingTodo.last_cast_time = time.time()
     def CastSpell():
-        CastDoubleJump()
+        CastNothingTodo()
         CastQOnce()
         CastESpell()
         CastQSpell()
+    def CastSpearRush(time, attack = False):
+        for _ in range(time):
+            DeviceShell("input swipe 1336 630 1336 630 500")
+            Sleep(0.4)
+        if attack:
+            Press([1336,630])
+            Sleep(1)
     def CheckIfInDungeon(scn = None):
         if scn is None:
             scn = ScreenShot()
-        
+
         if CheckIf(scn,'indungeon',[[0,0,125,125]]) or CheckIf(scn,'indungeon_cloud',[[0,0,125,125]]):
             logger.debug("已在副本中.")
             return True
@@ -895,25 +907,31 @@ def Factory():
         else:
             return "B"
     def AUTOCalibration_Y(roi = [[175,89,1177,719]]):
-        while 1:
+        for _ in range(50):
             pos = CheckIf(ScreenShot(),"保护目标",roi) or CheckIf(ScreenShot(),"撤离点",roi)
             if not pos:
                 logger.info("自动校正取消:不在目标范围内.")
                 return False
             if abs(pos[0]-800) <= 10:
-                return True 
+                return True
             DeviceShell(f"input swipe 800 450 {round((pos[0]-800)/3.5+800)} 450")
             Sleep(0.5)
-    def AUTOCalibration_P(tar):
-        roi = [[175,89,1177,719]]
+        return False
+    def AUTOCalibration_P(tar_p, tar_s = None, roi = None):
+        if roi == None:
+            roi = [[175,89,1177,719]]
         for _ in range(50):
-            pos = CheckIf(ScreenShot(),"保护目标",roi) or CheckIf(ScreenShot(),"撤离点",roi)
+            if tar_s == None:
+                pos = CheckIf(ScreenShot(),"保护目标",roi) or CheckIf(ScreenShot(),"撤离点",roi)
+            else:
+                pos = CheckIf(ScreenShot(),tar_s,roi)
             if pos:
-                delta = [round((pos[0]-tar[0])), round((pos[1]-tar[1]))]
-                logger.info(f"{pos} {tar} {delta}")
+                delta = [round((pos[0]-tar_p[0])), round((pos[1]-tar_p[1]))]
+                # logger.info(f"{pos} {tar} {delta}")
                 if (abs(delta[0]) <= 5) and (abs(delta[1]) <= 5):
                     return True
-                delta = [x/abs(x) * round(50 * abs(x) / (50 + abs(x))) if x!=0 else 0 for x in delta]
+                delta = [x/abs(x) * round(100 * abs(x) / (100 + abs(x))) if x>=10 else x//2 for x in delta]
+                # delta = [x-5 if x>=5 else x//2 for x in delta]
                 DeviceShell(f"input swipe 800 450 {delta[0]+800} {delta[1]+450}")
                 Sleep(0.5)
         return False
@@ -922,7 +940,7 @@ def Factory():
         if setting._FARM_TYPE == "开密函":
             logger.info("错误: 开密函模式无法自动选择任务. 取消执行.")
             setting._FORCESTOPING.set()
-            return 
+            return
         elif setting._FARM_TYPE != "夜航手册":
             FindCoordsOrElseExecuteFallbackAndWait(setting._FARM_TYPE,"input swipe 1400 400 1300 400",1)
             FindCoordsOrElseExecuteFallbackAndWait("开始挑战",setting._FARM_TYPE,2)
@@ -964,8 +982,6 @@ def Factory():
                     DeviceShell(f"input swipe 800 555 800 222")
                     Sleep(2)
                     FindCoordsOrElseExecuteFallbackAndWait("确认选择",[1450,228+(farm_target-4-1)*110],1)
-
-
     def resetMove():
         match setting._FARM_TYPE+setting._FARM_LVL:
             case "夜航手册40" | "夜航手册55" | "夜航手册60" | "开密函驱离":
@@ -999,7 +1015,7 @@ def Factory():
                     GoForward(16000)
                     GoLeft(2500)
                     GoForward(13000)
-                    
+
                     if CheckIf(ScreenShot(), "保护目标", [[502,262,96,96]]):
                         GoLeft(4000)
                         GoForward(30000)
@@ -1036,7 +1052,7 @@ def Factory():
                     GoRight(200)
                     return True
                 return False
-            case "夜航手册65":
+            case "夜航手册65" | "夜航手册30":
                 Sleep(2)
                 GoBack(1000)
                 GoLeft(6000)
@@ -1101,7 +1117,7 @@ def Factory():
                         if not ResetPosition():
                             return False
                         for i in range(setting._RESTART_INTERVAL):
-                            if CheckIf(ScreenShot(), "血清100%",[[69,227,153,108]],True):
+                            if CheckIf(ScreenShot(), "血清100%",[[69,227,153,108]]):
                                 break
                             else:
                                 CastSpell()
@@ -1182,7 +1198,7 @@ def Factory():
                                 CastSpell()
                                 Sleep(1)
                             if i == setting._RESTART_INTERVAL - 1:
-                                return False 
+                                return False
                         for _ in range(10):
                             scn = ScreenShot()
                             if not CheckIfInDungeon(scn):
@@ -1219,34 +1235,180 @@ def Factory():
                                 continue
                 return False
             case "mod强化60":
+                def finalRoom():
+                    AUTOCalibration_P([800,450])
+                    CastSpearRush(3)
+                    AUTOCalibration_P([800,600])
+                    CastSpearRush(3,True)
+                    AUTOCalibration_Y()
+                    CastSpearRush(3,True)
+                    GoBack(2000)
+                    AUTOCalibration_Y()
+                    CastSpearRush(3,True)
+                    GoBack(2000)
+                def saveVIP():
+                    ResetPosition()
+                    if not CheckIf(ScreenShot(), "操作_营救"):
+                        return
+                    DeviceShell("input swipe 800 450 1083 450 500")
+                    if not AUTOCalibration_P([983,450], "操作_营救"):
+                        return False
+                    GoForward(5000)
+                    DoubleJump()
+                    GoForward(2000)
+                    if not AUTOCalibration_P([800,450], "操作_营救"):
+                        return False
+                    GoForward(1000)
+                    for _ in range(5):
+                        if QuickUnlock():
+                            unlock = True
+                            break
+                        else:
+                            GoForward(100)
+                    if not unlock:
+                        return False
+                    # SaveDebugImage()
+                    DeviceShell("input swipe 800 450 750 450 500")
+                    AUTOCalibration_P([736,389],None,[[575,335,264,443]])
+                    GoForward(9000)
+                    DeviceShell("input swipe 800 450 1300 450 500")
+                    AUTOCalibration_P([800,450],None,[[597,213,344,380]])
+                    GoForward(2000)
+                    for _ in range(5):
+                        if QuickUnlock():
+                            unlock = True
+                            break
+                        else:
+                            GoForward(100)
+                    if not unlock:
+                        return False
+                    Sleep(2)
+                    if CheckIf(ScreenShot(),"护送目标前往撤离点"):
+                        logger.info("人质已救出!")
+                        DeviceShell(f"input swipe 800 450 {1600-1528} 450 500")
+                        if not AUTOCalibration_P([865,450]):
+                            return False
+                        GoForward(5500)
+                        Sleep(1)
+                        if not AUTOCalibration_P([810,418]):
+                            return False
+                        CastSpearRush(4)
+                        Sleep(1)
+                        finalRoom()
+                        return False
+
+                    DeviceShell("input swipe 800 450 1528 450 500")
+                    DeviceShell("input swipe 800 450 1528 450 500")
+                    DeviceShell("input swipe 800 450 1100 450 500")
+                    if not AUTOCalibration_P([800,450], None,[[567,226,317,409]]):
+                        return False
+                    GoForward(7000)
+                    for _ in range(5):
+                        if QuickUnlock():
+                            unlock = True
+                            break
+                        else:
+                            GoForward(100)
+                    if not unlock:
+                        return False
+                    if CheckIf(ScreenShot(),"护送目标前往撤离点"):
+                        logger.info("人质已救出!")
+                        DeviceShell("input swipe 800 450 1528 450 500")
+                        GoRight(2000)
+                        if not AUTOCalibration_P([800,500]):
+                            return False
+                        CastSpearRush(5)
+                        Sleep(1)
+                        finalRoom()
+                        return False
+
+                    GoBack(7000)
+                    DeviceShell("input swipe 800 450 1200 450 500")
+                    if not AUTOCalibration_P([985,440], None,[[640,241,437,450]]):
+                        return False
+                    GoForward(7000)
+                    DeviceShell("input swipe 800 450 1190 450 500")
+                    if not AUTOCalibration_P([800,450], None,[[640,241,437,450]]):
+                        return False
+                    GoForward(2000)
+                    for _ in range(5):
+                        if QuickUnlock():
+                            unlock = True
+                            break
+                        else:
+                            GoForward(100)
+                    if not unlock:
+                        return False
+                    Sleep(2)
+                    if CheckIf(ScreenShot(),"护送目标前往撤离点"):
+                        logger.info("人质已救出!")
+                        if not AUTOCalibration_P([964,561]):
+                            return False
+                        CastSpearRush(2)
+                        if not AUTOCalibration_P([800,450]):
+                            return False
+                        CastSpearRush(2)
+                        finalRoom()
+                        return False
+
+                    return False
+
                 if not AUTOCalibration_P([800,600]):
                     return
-                DeviceShell("input swipe 1336 630 1336 630 500")
-                Sleep(0.4)
-                DeviceShell("input swipe 1336 630 1336 630 500")
-                Sleep(0.4)
-                DeviceShell("input swipe 1336 630 1336 630 500")
-                Sleep(0.4)
-                DeviceShell("input swipe 1336 630 1336 630 500")
-                Sleep(0.4)
-                Press([1336,630])
-                if not AUTOCalibration_P([800,450]): 
+                CastSpearRush(4, True)
+                if not AUTOCalibration_P([800,450]):
                     return
-                DeviceShell("input swipe 1336 630 1336 630 500")
-                Sleep(0.4)
-                DeviceShell("input swipe 1336 630 1336 630 500")
-                Sleep(0.4)
-                Sleep(3)
+                CastSpearRush(2)
+                Sleep(2)
                 scn = ScreenShot()
                 if CheckIf(scn,"保护目标", [[802-50,480-50,100,100]]):
                     logger.info("正对")
+                    CastSpearRush(2)
+                    if not AUTOCalibration_P([800,600]):
+                        return
+                    CastSpearRush(3, True)
+                    GoBack(2000)
+                    if not AUTOCalibration_P([800,600]):
+                        return
+                    CastSpearRush(2, True)
+                    Sleep(2)
+                    CastSpearRush(2)
+                    
+                    saveVIP()
                 elif CheckIf(scn,"保护目标", [[646-50,377-50,100,100]]):
                     logger.info("左上")
+                    CastSpearRush(2)
+                    if not AUTOCalibration_P([800,600]):
+                        return
+                    CastSpearRush(4)
+                    GoBack(2000)
+                    if not AUTOCalibration_P([800,450]):
+                        return
+                    CastSpearRush(2)
+                    saveVIP()
                 elif CheckIf(scn,"保护目标", [[1095-50,431-50,100,100]]):
-                    logger.info("右上")
-                elif CheckIf(scn,"保护目标", [[1124-50,442-50,100,100]]):
-                    logger.info("右中")
+                    DeviceShell("input swipe 800 450 1107 450 500")
+                    if CheckIf(ScreenShot(),"保护目标",[[620-50,431-50,100,100]]):
+                        if not AUTOCalibration_P([723,600]):
+                            return
+                        CastSpearRush(5, True)
+                        if not AUTOCalibration_P([800,450]):
+                            return
+                        CastSpearRush(3)
+                        saveVIP()
+                    else:
+                        if not AUTOCalibration_P([882,600]):
+                            return
+                        CastSpearRush(3)
+                        if not AUTOCalibration_P([800,450]):
+                            return
+                        CastSpearRush(1)
+                        Sleep(1)
+                        CastSpearRush(1)
+                        saveVIP()
+
                 return False
+                return saveVIP()
             case _ :
                 logger.info("没有设定开场移动. 原地挂机.")
                 return True
@@ -1278,13 +1440,13 @@ def Factory():
                 case _:
                     DEFAULTWAVE = 1
             logger.info(f"{setting._FARM_TYPE+setting._FARM_LVL}的默认局内轮次数为{DEFAULTWAVE}.")
-    
+
         ########################################
         handlers = []
         def register(func):
             handlers.append(func)
             return func
-        
+
         @register
         def handle_relogin(scn):
             if Press(CheckIf(scn,"重新连接")):
@@ -1329,6 +1491,20 @@ def Factory():
                                 Sleep(time)
                         else:
                             Press(fishing)
+        @register
+        def handle_dig(scn):
+            if CheckIf(scn,"勘察", [[57,279,43,24]]):
+                logger.info("检测到勘察任务, 强制结束.")
+                setting._FORCESTOPING.set()
+                return True
+            return False
+        @register
+        def handle_coop_accept(scn):
+            if Press(CheckIf(scn,"多人联机_同意", [[1514,67,64,64]])):
+                logger.info("检测到多人联机的请求, 同意请求.")
+                setting._FORCESTOPING.set()
+                return True
+            return False
         @register
         def handle_menu(scn):
             if CheckIf(scn, "任务图标"):
@@ -1454,7 +1630,7 @@ def Factory():
                         runtimeContext._GAME_COUNTER -= 1
                         QuitDungeon()
                         return True
-            
+
                 if time.time() - runtimeContext._START_TIME > setting._RESTART_INTERVAL:
                     logger.info("时间太久了, 重来吧")
                     runtimeContext._START_TIME = time.time()
@@ -1473,12 +1649,12 @@ def Factory():
         ########################################
 
         check_counter = 0
-        round_time = time.time()            
+        round_time = time.time()
 
         while 1:
             if setting._FORCESTOPING.is_set():
                 break
-            
+
             scn = ScreenShot()
 
             handled_scene = False
@@ -1486,14 +1662,14 @@ def Factory():
                 if handler(scn):
                     handled_scene = True
                     break
-        
+
             if handled_scene == True:
                 check_counter = 0
                 continue
             else:
                 check_counter +=1
                 Press([1,1])
-            
+
             if time.time()-round_time < 1:
                 Sleep(1-(time.time()-round_time))
                 round_time = time.time()
@@ -1532,7 +1708,7 @@ def Factory():
 
         setting = set
         Sleep(1) # 没有等utils初始化完成
-        
+
         ResetADBDevice()
 
         QuestFarm()
