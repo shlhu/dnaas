@@ -906,7 +906,7 @@ def Factory():
             return "A"
         else:
             return "B"
-    def AUTOCalibration_Y(roi = [[175,89,1177,719]]):
+    def AUTOCalibration_Y(roi = [[175,89,1277,719]]):
         for _ in range(50):
             pos = CheckIf(ScreenShot(),"保护目标",roi) or CheckIf(ScreenShot(),"撤离点",roi)
             if not pos:
@@ -920,18 +920,25 @@ def Factory():
     def AUTOCalibration_P(tar_p, tar_s = None, roi = None):
         if roi == None:
             roi = [[175,89,1177,719]]
-        for _ in range(50):
+        for iter in range(50):
+            scn = ScreenShot()
+            if CheckIf(scn,"再次进行"):
+                return False
             if tar_s == None:
-                pos = CheckIf(ScreenShot(),"保护目标",roi) or CheckIf(ScreenShot(),"撤离点",roi)
+                pos = CheckIf(scn,"保护目标",roi) or CheckIf(scn,"撤离点",roi)
             else:
-                pos = CheckIf(ScreenShot(),tar_s,roi)
+                pos = CheckIf(scn,tar_s,roi)
             if pos:
                 delta = [round((pos[0]-tar_p[0])), round((pos[1]-tar_p[1]))]
                 # logger.info(f"{pos} {tar} {delta}")
                 if (abs(delta[0]) <= 5) and (abs(delta[1]) <= 5):
                     return True
-                delta = [x/abs(x) * round(100 * abs(x) / (100 + abs(x))) if x>=10 else x//2 for x in delta]
-                # delta = [x-5 if x>=5 else x//2 for x in delta]
+                delta[0] = delta[0]/abs(delta[0]) * round(100 * abs(delta[0]) / (100 + abs(delta[0]))) if delta[0]>=10 else delta[0]//2
+                delta[1] = delta[1]/abs(delta[1]) * round(100 * abs(delta[1]) / (100 + abs(delta[1]))) if delta[1]>=10 else delta[1]//2
+                if pos[1] > 600:
+                    delta[1]+=3
+                    if iter == 0:
+                        delta[1] = round((pos[1]-tar_p[1]))
                 DeviceShell(f"input swipe 800 450 {delta[0]+800} {delta[1]+450}")
                 Sleep(0.5)
         return False
@@ -1238,14 +1245,15 @@ def Factory():
                 def finalRoom():
                     AUTOCalibration_P([800,450])
                     CastSpearRush(3)
-                    AUTOCalibration_P([800,600])
-                    CastSpearRush(3,True)
-                    AUTOCalibration_Y()
-                    CastSpearRush(3,True)
-                    GoBack(2000)
-                    AUTOCalibration_Y()
-                    CastSpearRush(3,True)
-                    GoBack(2000)
+                    for _ in range(5):
+                        if CheckIf(ScreenShot(),"护送目标前往撤离点"):
+                            if AUTOCalibration_P([800,600]):
+                                CastSpearRush(3,True)
+                                GoBack(2000)
+                    if CheckIf(ScreenShot(),"再次进行"):
+                        logger.info("营救结束.")
+                        return True
+                    return False
                 def saveVIP():
                     ResetPosition()
                     if not CheckIf(ScreenShot(), "操作_营救"):
@@ -1267,7 +1275,7 @@ def Factory():
                             GoForward(100)
                     if not unlock:
                         return False
-                    # SaveDebugImage()
+                    
                     DeviceShell("input swipe 800 450 750 450 500")
                     AUTOCalibration_P([736,389],None,[[575,335,264,443]])
                     GoForward(9000)
@@ -1294,8 +1302,7 @@ def Factory():
                             return False
                         CastSpearRush(4)
                         Sleep(1)
-                        finalRoom()
-                        return False
+                        return finalRoom()
 
                     DeviceShell("input swipe 800 450 1528 450 500")
                     DeviceShell("input swipe 800 450 1528 450 500")
@@ -1319,12 +1326,11 @@ def Factory():
                             return False
                         CastSpearRush(5)
                         Sleep(1)
-                        finalRoom()
-                        return False
+                        return finalRoom()
 
                     GoBack(7000)
                     DeviceShell("input swipe 800 450 1200 450 500")
-                    if not AUTOCalibration_P([985,440], None,[[640,241,437,450]]):
+                    if not AUTOCalibration_P([985,440], None,[[640,241,660,450]]):
                         return False
                     GoForward(7000)
                     DeviceShell("input swipe 800 450 1190 450 500")
@@ -1348,11 +1354,10 @@ def Factory():
                         if not AUTOCalibration_P([800,450]):
                             return False
                         CastSpearRush(2)
-                        finalRoom()
-                        return False
+                        return finalRoom()
 
                     return False
-
+                ################## 第一个房间
                 if not AUTOCalibration_P([800,600]):
                     return
                 CastSpearRush(4, True)
@@ -1360,6 +1365,7 @@ def Factory():
                     return
                 CastSpearRush(2)
                 Sleep(2)
+                ################## 第二个房间
                 scn = ScreenShot()
                 if CheckIf(scn,"保护目标", [[802-50,480-50,100,100]]):
                     logger.info("正对")
@@ -1374,7 +1380,7 @@ def Factory():
                     Sleep(2)
                     CastSpearRush(2)
                     
-                    saveVIP()
+                    return saveVIP()
                 elif CheckIf(scn,"保护目标", [[646-50,377-50,100,100]]):
                     logger.info("左上")
                     CastSpearRush(2)
@@ -1385,18 +1391,20 @@ def Factory():
                     if not AUTOCalibration_P([800,450]):
                         return
                     CastSpearRush(2)
-                    saveVIP()
+                    return saveVIP()
                 elif CheckIf(scn,"保护目标", [[1095-50,431-50,100,100]]):
                     DeviceShell("input swipe 800 450 1107 450 500")
                     if CheckIf(ScreenShot(),"保护目标",[[620-50,431-50,100,100]]):
+                        logger.info("左上")
                         if not AUTOCalibration_P([723,600]):
                             return
                         CastSpearRush(5, True)
                         if not AUTOCalibration_P([800,450]):
                             return
                         CastSpearRush(3)
-                        saveVIP()
+                        return saveVIP()
                     else:
+                        logger.info("左下")
                         if not AUTOCalibration_P([882,600]):
                             return
                         CastSpearRush(3)
@@ -1405,10 +1413,11 @@ def Factory():
                         CastSpearRush(1)
                         Sleep(1)
                         CastSpearRush(1)
-                        saveVIP()
+                        return saveVIP()
 
+
+                logger.info("看起来是第四个牢房或者超时了...")
                 return False
-                return saveVIP()
             case _ :
                 logger.info("没有设定开场移动. 原地挂机.")
                 return True
@@ -1594,7 +1603,9 @@ def Factory():
                         1
                 else:
                     logger.info("已完成目标小局, 撤离")
-                    while Press(CheckIf(ScreenShot(), "撤离")):
+                    for _ in range(50):
+                        if Press(CheckIf(ScreenShot(), "撤离")):
+                            break
                         Sleep(1)
 
                     runtimeContext._IN_GAME_COUNTER = 1
