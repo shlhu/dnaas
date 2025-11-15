@@ -20,9 +20,10 @@ DUNGEON_TARGETS = {
     "武器突破": {"60":5, "70":6},
     "皎皎币":   {"60":3,"70":4},
     "夜航手册": {"30":2, "40":3,"50":4,"55":5, "60":6,"65":7,"70":8},
+    "魔之楔(不是夜航手册!)": {"40":1, "60": 2, "80":3, "100":4},
     "mod强化": {"60":4},
     "开密函": {"驱离":0, "探险无尽":0, "无巧手探险无尽":0},
-    # "钓鱼": {"无悠闲":0}
+    "钓鱼": {"悠闲":0}
     }
 DUNGEON_EXTRA = ["无关心","1","2","3","4","5","6","7","8","9"]
 
@@ -796,6 +797,7 @@ def Factory():
             Press([1518,631])
             Sleep(1)
     def QuitDungeon():
+        runtimeContext._GAME_COUNTER -= 1 # 因为退出流程后我们会看见再次挑战, 看见再次挑战会加1, 所以我们提前扣掉这一次.
         try:
             FindCoordsOrElseExecuteFallbackAndWait(["任务图标","放弃挑战","放弃挑战_云","再次进行"],['indungeon','indungeon_cloud'],2)
             scn = ScreenShot()
@@ -804,11 +806,13 @@ def Factory():
                 return
             if CheckIf(scn,"放弃挑战") or CheckIf(scn,"放弃挑战_云"):
                 Press(FindCoordsOrElseExecuteFallbackAndWait("确定",["放弃挑战","放弃挑战_云"],2))
+                
                 Sleep(10)
                 return
             if CheckIf(scn, "再次进行"):
                 return
         except:
+            runtimeContext._GAME_COUNTER += 1 # 发生意外重启了, 不会看见再次挑战所以次数不会增加, 所以也没有扣掉的必要.
             return
     def CastESpell():
         nonlocal runtimeContext
@@ -831,8 +835,8 @@ def Factory():
                 if setting._CAST_E_PRINT:
                     logger.info(f"Q技能释放计时器: 当前次数:{(time.time() - CastQSpell.last_cast_time):.2f}")
                 Press([1205,779])
-                Sleep(2)
                 if CheckIfInDungeon():
+                    Sleep(3)
                     Press([1203,631])
                     Sleep(1)
                     Press([1097,658])
@@ -938,7 +942,7 @@ def Factory():
                 if pos[1] > 600:
                     delta[1]+=3
                     if iter == 0:
-                        delta[1] = round((pos[1]-tar_p[1]))
+                        delta[1] = round((pos[1]-450))
                 DeviceShell(f"input swipe 800 450 {delta[0]+800} {delta[1]+450}")
                 Sleep(0.5)
         return False
@@ -1169,7 +1173,9 @@ def Factory():
                 if QuickUnlock():
                     GoLeft(4700)
                     GoBack(2000)
-                    GoForward(200)
+                    DeviceShell("input swipe 800 450 800 850 500")
+                    DeviceShell("input swipe 800 450 800 850 500")
+                    DeviceShell("input swipe 800 450 800 850 500")
                     return True
                 return False
             case "武器突破60" | "武器突破70":
@@ -1245,14 +1251,16 @@ def Factory():
                 def finalRoom():
                     AUTOCalibration_P([800,450])
                     CastSpearRush(3)
-                    for _ in range(5):
+                    for iter in range(10):
                         if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                             if AUTOCalibration_P([800,600]):
                                 CastSpearRush(3,True)
                                 GoBack(2000)
-                    if CheckIf(ScreenShot(),"再次进行"):
-                        logger.info("营救结束.")
-                        return True
+                        if iter >= 5:
+                            Sleep(1)
+                        if CheckIf(ScreenShot(),"再次进行"):
+                            logger.info("营救结束.")
+                            return True
                     return False
                 def saveVIP():
                     ResetPosition()
@@ -1416,7 +1424,7 @@ def Factory():
                         return saveVIP()
 
 
-                logger.info("看起来是第四个牢房或者超时了...")
+                logger.info("不可用的第二个房间.")
                 return False
             case _ :
                 logger.info("没有设定开场移动. 原地挂机.")
@@ -1472,34 +1480,22 @@ def Factory():
             return False
         @register
         def handle_fishing(scn):
+            counter = 0
+            t = time.time()
             if setting._FARM_TYPE == "钓鱼":
-                if not CheckIf(scn, "下钩"):
-                    logger.info("无法钓鱼. 请在抛杆后开启任务")
-                    setting._FORCESTOPING.set()
-                    return False
-                Press(CheckIf(scn,"下钩"))
                 while 1:
                     scn = ScreenShot()
-                    fish = CheckIf(scn, "鱼", [[1387,184,48,397]])
-                    stick = CheckIf(scn, "上半部分", [[1387,184,48,397]])
-                    fishing = CheckIf(scn, "下钩",[[1339,667,138,136]])
-                    if fishing:
-                        if fish and stick:
-                            logger.info(f"发现鱼 {fish} {stick}")
-                            if (fish[1]<(stick[1]+42)):
-                                dist = stick[1]-fish[1]+42
-                                time = round(dist/303*1200)+200
-                                time = time//2
-                                logger.info(f"距离{dist} 推测时间{time}")
-                                DeviceShell(f"input swipe 1409 736 1409 736 {time}")
-                            elif fish[1]>(stick[1]+42):
-                                dist = fish[1]-stick[1]-42
-                                time = round(dist/303*867)//1000
-                                time = time-0.2 if time>0.2 else 0
-                                logger.info(f"等待{time}")
-                                Sleep(time)
-                        else:
-                            Press(fishing)
+                    if not CheckIfInDungeon():
+                        logger.info("不在钓鱼界面. 自动退出.")
+                        setting._FORCESTOPING.set()
+                        return False
+                    Press(CheckIf(scn,"悠闲钓鱼_收杆"))
+                    Press(CheckIf(scn,"悠闲钓鱼_授鱼以鱼"))
+                    if (CheckIf(scn,"悠闲钓鱼_钓到鱼了")):
+                        logger.info("钓到鱼了!")
+                        Press([802,741])
+                        counter+=1
+                        logger.info(f"钓到了{counter}条鱼, 累计用时{(time.time()-t):.2f}秒.", extra={"summary": True})                    
         @register
         def handle_dig(scn):
             if CheckIf(scn,"勘察", [[57,279,43,24]]):
@@ -1638,7 +1634,6 @@ def Factory():
                         runtimeContext._GAME_PREPARE = True
                     else:
                         logger.info("尚未支持的地图, 重新进本.")
-                        runtimeContext._GAME_COUNTER -= 1
                         QuitDungeon()
                         return True
 
