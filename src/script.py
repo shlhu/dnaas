@@ -1425,7 +1425,6 @@ def Factory():
                         CastSpearRush(1)
                         return saveVIP()
 
-
                 logger.info("不可用的第二个房间.")
                 return False
             case _ :
@@ -1483,19 +1482,26 @@ def Factory():
         @register
         def handle_fishing(scn):
             counter = 0
+            quit_counter = 0
             t = time.time()
             if setting._FARM_TYPE == "钓鱼":
                 while 1:
                     scn = ScreenShot()
                     if (not CheckIfInDungeon(scn)) and (not CheckIf(scn,"悠闲钓鱼_钓到鱼了")):
-                        logger.info("不在钓鱼界面. 自动退出.")
-                        setting._FORCESTOPING.set()
-                        return False
+                        if quit_counter % 10 == 0:
+                            logger.info(f"不在钓鱼界面.({quit_counter // 10})")
+                        quit_counter +=1
+                        Sleep(1)
+                        if quit_counter > 150:
+                            logger.info("退出钓鱼.")
+                            setting._FORCESTOPING.set()
+                            return False
                     Press(CheckIf(scn,"悠闲钓鱼_收杆"))
                     Press(CheckIf(scn,"悠闲钓鱼_授鱼以鱼"))
                     if (CheckIf(scn,"悠闲钓鱼_钓到鱼了")):
                         logger.info("钓到鱼了!")
                         Press([802,741])
+                        Sleep(3)
                         counter+=1
                         logger.info(f"钓到了{counter}条鱼, 累计用时{(time.time()-t):.2f}秒.", extra={"summary": True})                    
         @register
