@@ -21,9 +21,10 @@ DUNGEON_TARGETS = {
     "皎皎币":   {"60":3,"70":4},
     "夜航手册": {"30":2, "40":3,"50":4,"55":5, "60":6,"65":7,"70":8},
     "魔之楔(不是夜航手册!)": {"40":1, "60": 2, "80":3, "100":4},
-    "mod强化": {"60":4},
-    "开密函": {"驱离":0, "探险无尽":0, "无巧手探险无尽":0},
-    "钓鱼": {"悠闲":0}
+    "mod强化": {"60":4, "60(测试)":4},
+    "开密函": {"驱离":0, "探险无尽":0, "半自动无巧手":0},
+    "钓鱼": {"悠闲":0},
+    # "测试": {"测试":0}
     }
 DUNGEON_EXTRA = ["无关心","1","2","3","4","5","6","7","8","9"]
 
@@ -995,10 +996,13 @@ def Factory():
                     FindCoordsOrElseExecuteFallbackAndWait("确认选择",[1450,228+(farm_target-4-1)*110],1)
     def resetMove():
         match setting._FARM_TYPE+setting._FARM_LVL:
-            case "夜航手册40" | "夜航手册55" | "夜航手册60" | "开密函驱离":
+            case "夜航手册40" | "夜航手册55" | "夜航手册60":
                 GoForward(15000)
                 GoBack(1000)
                 GoLeft(100)
+                return True
+            case "开密函驱离":
+                ResetPosition()
                 return True
             case "皎皎币60":
                 if not ResetPosition():
@@ -1249,7 +1253,7 @@ def Factory():
                                         return True
                                 continue
                 return False
-            case "mod强化60":
+            case "mod强化60" | "mod强化60测试":
                 def finalRoom():
                     AUTOCalibration_P([800,450])
                     CastSpearRush(3)
@@ -1346,8 +1350,8 @@ def Factory():
                     DeviceShell("input swipe 800 450 1190 450 500")
                     if not AUTOCalibration_P([800,450], None,[[640,241,437,450]]):
                         return False
-                    GoForward(2000)
-                    for _ in range(5):
+                    GoForward(2500)
+                    for _ in range(20):
                         if QuickUnlock():
                             unlock = True
                             break
@@ -1365,6 +1369,41 @@ def Factory():
                             return False
                         CastSpearRush(2)
                         return finalRoom()
+                    
+                    logger.info("第四个房间")
+                    if setting._FARM_TYPE+setting._FARM_LVL == "mod强化60测试":
+                        DeviceShell("input swipe 1528 450 600 450 500")
+                        AUTOCalibration_P([800,450])
+                        GoLeft(2300)
+                        GoForward(2000)
+                        AUTOCalibration_P([800,600])
+                        CastSpearRush(2,True)
+                        AUTOCalibration_P([800,600])
+                        CastSpearRush(2,True)
+                        GoBack(500)
+                        DeviceShell("input swipe 1528 450 800 450 500")
+                        AUTOCalibration_P([730,450])
+                        for _ in range(20):
+                            if QuickUnlock():
+                                unlock = True
+                                break
+                            else:
+                                GoForward(100)
+                        if not unlock:
+                            return False
+                        Sleep(2)
+                        if CheckIf(ScreenShot(),"护送目标前往撤离点"):
+                            logger.info("人质已救出!")
+                            AUTOCalibration_P([800,450])
+                            GoRight(2000)
+                            GoForward(2000)
+                            GoRight(2000)
+                            GoForward(2000)                
+                            GoRight(2000)
+                            if not AUTOCalibration_P([800,450]):
+                                    return
+                            CastSpearRush(3)
+                            return finalRoom()
 
                     return False
                 ################## 第一个房间
@@ -1427,6 +1466,8 @@ def Factory():
 
                 logger.info("不可用的第二个房间.")
                 return False
+            case "测试测试":
+                pass
             case _ :
                 logger.info("没有设定开场移动. 原地挂机.")
                 return True
@@ -1453,7 +1494,7 @@ def Factory():
                     DEFAULTWAVE = 3
                 case "角色材料10":
                     DEFAULTWAVE = 15
-                case "角色材料30" | "角色材料60" | "开密函探险无尽" | "开密函无巧手探险无尽":
+                case "角色材料30" | "角色材料60" | "开密函探险无尽" | "开密函半自动无巧手":
                     DEFAULTWAVE = 15
                 case _:
                     DEFAULTWAVE = 1
@@ -1487,7 +1528,8 @@ def Factory():
             if setting._FARM_TYPE == "钓鱼":
                 while 1:
                     scn = ScreenShot()
-                    if (not CheckIfInDungeon(scn)) and (not CheckIf(scn,"悠闲钓鱼_钓到鱼了")):
+                    if (not CheckIfInDungeon(scn)) and (not CheckIf(scn,"悠闲钓鱼_钓到鱼了")) and (not CheckIf(scn,"悠闲钓鱼_新图鉴")):
+                        Press([802,741])
                         if quit_counter % 10 == 0:
                             logger.info(f"不在钓鱼界面.({quit_counter // 10})")
                         quit_counter +=1
@@ -1498,7 +1540,7 @@ def Factory():
                             return False
                     Press(CheckIf(scn,"悠闲钓鱼_收杆"))
                     Press(CheckIf(scn,"悠闲钓鱼_授鱼以鱼"))
-                    if (CheckIf(scn,"悠闲钓鱼_钓到鱼了")):
+                    if (CheckIf(scn,"悠闲钓鱼_钓到鱼了")) or (CheckIf(scn,"悠闲钓鱼_新图鉴")):
                         logger.info("钓到鱼了!")
                         Press([802,741])
                         Sleep(3)
@@ -1642,6 +1684,7 @@ def Factory():
                         runtimeContext._GAME_PREPARE = True
                     else:
                         logger.info("尚未支持的地图, 重新进本.")
+                        # SaveDebugImage()
                         QuitDungeon()
                         return True
 
