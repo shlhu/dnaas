@@ -661,6 +661,19 @@ def Factory():
             Sleep()
             restartGame()
             return None # restartGame会抛出异常 所以直接返回none就行了
+    # def FromAToBByC(A,B,C):
+    #     """
+    #     从一个起始状态A向目标状态B进行尝试转化.
+    #     首先会检查屏幕中是否存在B, 然后检查是否存在A, 当满足A存在的时候, 进行C操作.
+    #     A可以是一个list, 每个元素之间是或的关系.
+    #     C可以是一个list, 会逐个执行C的每一个元素.
+    #     """
+    #     while 1:
+    #         for _ in range(runtimeContext._MAXRETRYLIMIT):
+    #             if setting._FORCESTOPING.is_set():
+    #                 return None
+    #             scn = ScreenShot()
+    #             if not CheckIf()
     def BasicStateList(always_do_before, check_list, normal_quit, always_do_after, alarm_list):
         counter = 0
         while True:
@@ -746,7 +759,7 @@ def Factory():
     def ResetPosition():
         logger.info("开始复位.")
         try:
-            FindCoordsOrElseExecuteFallbackAndWait(["放弃挑战","放弃挑战_云"],['indungeon','indungeon_cloud'],1)
+            FindCoordsOrElseExecuteFallbackAndWait(["放弃挑战","放弃挑战_云","设置"],['indungeon','indungeon_cloud'],1)
             FindCoordsOrElseExecuteFallbackAndWait("其他设置","设置",1)
             FindCoordsOrElseExecuteFallbackAndWait(["复位角色","复位角色_云"],"其他设置",1)
             FindCoordsOrElseExecuteFallbackAndWait("确定",["复位角色","复位角色_云"],1)
@@ -1437,7 +1450,31 @@ def Factory():
                 logger.info("不可用的第二个房间.")
                 return False
             case "测试测试":
-                pass
+                tick_start = time.time()
+                TICK_TIME = 1
+                tick_counter = 0
+                new_battle_reset = False
+                while 1:
+                    if time.time() - tick_start < TICK_TIME:
+                        Sleep(TICK_TIME-(time.time() - tick_start))
+                    tick_start = time.time()
+                    tick_counter += 1
+                    scn = ScreenShot()
+                    if CheckIf(scn, "肉鸽_战斗", [[1318,69,231,72]]):
+                        if tick_counter % 10 == 0:
+                            DeviceShell(f"input swipe 800 0 800 800 500")
+                            DeviceShell(f"input swipe 800 450 800 200 500")
+                        Press([1203,631])
+                        new_battle_reset = False
+                    if CheckIf(scn, "肉鸽_选择烛芯", [[1014,838,272,53]]):
+                        Press([766,695])
+                        Press([1414,861])
+                    if CheckIf(scn, "肉鸽_继续探索", [[1370,62,195,59]]):
+                        if not new_battle_reset:
+                            ResetPosition()
+                            new_battle_reset = True
+
+
             case _ :
                 logger.info("没有设定开场移动. 原地挂机.")
                 return True
@@ -1498,6 +1535,7 @@ def Factory():
             if setting._FARM_TYPE == "钓鱼":
                 while 1:
                     scn = ScreenShot()
+                    Press([802,741])
                     if (not CheckIfInDungeon(scn)) and (not CheckIf(scn,"悠闲钓鱼_钓到鱼了")) and (not CheckIf(scn,"悠闲钓鱼_新图鉴")):
                         Press([802,741])
                         if quit_counter % 10 == 0:

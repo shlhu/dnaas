@@ -100,21 +100,22 @@ class AutoUpdater():
     def check_for_updates(self):
         """执行更新检查逻辑"""
         update_url = f"https://{self.github_user}.github.io/{self.github_repo}/release.json"
-        # try:
-        #     req = Request(update_url, headers={'Cache-Control': 'no-cache'})
-        #     with urlopen(req, timeout=10) as response:
-        #         data = json.loads(response.read().decode())
+        logger.info(update_url)
+        try:
+            req = Request(update_url, headers={'Cache-Control': 'no-cache'})
+            with urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode())
             
-        #     if self._is_newer_version(data['version']):
-        #         print(f"发现新版本: {data['version']}")
-        #         self.update_data = data
-        #         self.msg_queue.put(('update_available', data))
+            if self._is_newer_version(data['version']):
+                print(f"发现新版本: {data['version']}")
+                self.update_data = data
+                self.msg_queue.put(('update_available', data))
 
-        # except (URLError, ValueError, json.JSONDecodeError) as e:
-        #     # 发生错误，同样通过队列报告。
-        #     error_message = f"检查更新失败: {e}"
-        #     # logger.error(error_message) # 暂时把这个关掉 看看是否是多线程问题
-        #     # self.msg_queue.put(('error', error_message))
+        except (URLError, ValueError, json.JSONDecodeError) as e:
+            # 发生错误，同样通过队列报告。
+            error_message = f"检查更新失败: {e}"
+            logger.error(error_message) # 暂时把这个关掉 看看是否是多线程问题
+            self.msg_queue.put(('error', error_message))
 
     def download(self):
         try:

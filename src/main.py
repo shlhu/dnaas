@@ -1,7 +1,7 @@
 from gui import *
 import argparse
 
-__version__ = '1.0.32' 
+__version__ = '1.0.33' 
 OWNER = "arnold2957"
 REPO = "dnaas"
 # 
@@ -31,7 +31,7 @@ class AppController(tk.Tk):
             github_repo=REPO,
             current_version=__version__
         )
-        # self.schedule_periodic_update_check()
+        self.schedule_periodic_update_check()
         self.check_queue()
 
     def run_in_thread(self, target_func, *args):
