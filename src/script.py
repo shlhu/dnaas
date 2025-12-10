@@ -19,7 +19,7 @@ DUNGEON_TARGETS = {
     "角色材料": {"10":1, "30":3, "60":6},
     "武器突破": {"60":5, "70":6},
     "皎皎币":   {"60":3,"70":4},
-    "夜航手册": {"30":2, "40":3,"50":4,"55":5, "60":6,"65":7,"70":8},
+    "夜航手册": {"30":2, "40":3,"50":4,"55":5, "60":6,"65":7,"70":8,"80":8},
     "魔之楔(不是夜航手册!)": {"40":1, "60": 2, "80":3, "100":4},
     "mod强化": {"60":4, "60(测试)":4},
     "开密函": {"驱离":0, "探险无尽":0, "半自动无巧手":0},
@@ -1013,8 +1013,9 @@ def Factory():
         elif setting._FARM_TYPE == "夜航手册":
             FindCoordsOrElseExecuteFallbackAndWait("前往","夜航手册",1)
             lvl = DUNGEON_TARGETS[setting._FARM_TYPE][setting._FARM_LVL]
-            DeviceShell("input swipe 562 210 562 714")
-            Sleep(2)
+            if setting._FARM_LVL != '80':
+                DeviceShell("input swipe 562 210 562 714")
+                Sleep(2)
             Press([562,210+(lvl-1)*84])
             if setting._FARM_EXTRA == "无关心":
                 farm_target = random.choice([1,2,3,4])
