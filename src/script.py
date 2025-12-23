@@ -24,7 +24,8 @@ DUNGEON_TARGETS = {
     "mod强化": {"60":4, "60(测试)":4},
     "开密函": {"驱离":0, "探险无尽":0, "半自动无巧手":0},
     "钓鱼": {"悠闲":0},
-    "迷津": {"测试":0}
+    "迷津": {"默认难度":0},
+    # "测试": {"测试":0}
     }
 DUNGEON_EXTRA = ["无关心","1","2","3","4","5","6","7","8","9"]
 
@@ -447,10 +448,10 @@ def Factory():
             thread.start()
 
             try:
-                if not completed.wait(timeout=7):
+                if not completed.wait(timeout:=7):
                     # 线程超时未完成
                     logger.warning(f"ADB命令执行超时: {cmdStr}")
-                    raise TimeoutError(f"ADB命令在{7}秒内未完成")
+                    raise TimeoutError(f"ADB命令在{timeout}秒内未完成")
 
                 if exception is not None:
                     raise exception
@@ -784,9 +785,9 @@ def Factory():
     def GoLeft(time = 1000):
         SPLIT = 3000
         if time <= SPLIT:
-            DeviceShell(f"input swipe 0 698 0 698 {time}")
+            DeviceShell(f"input swipe 560 550 50 550 {int(1.02*time)}")
         else:
-            DeviceShell(f"input swipe 0 698 0 698 {SPLIT}")
+            DeviceShell(f"input swipe 560 550 50 550 {int(1.02*SPLIT)}")
             GoLeft(time-SPLIT)
 
     def DoubleJump():
@@ -797,23 +798,23 @@ def Factory():
     def GoRight(time = 1000):
         SPLIT = 3000
         if time <= SPLIT:
-            DeviceShell(f"input swipe 526 698 526 698 {time}")
+            DeviceShell(f"input swipe 50 550 560 550 {int(1.02*time)}")
         else:
-            DeviceShell(f"input swipe 526 698 526 698 {SPLIT}")
+            DeviceShell(f"input swipe 50 550 560 550 {int(1.02*SPLIT)}")
             GoRight(time-SPLIT)
     def GoForward(time = 1000):
         SPLIT = 3000
         if time <= SPLIT:
-            DeviceShell(f"input swipe 265 616 265 616 {time}")
+            DeviceShell(f"input swipe 500 610 500 400 {int(time*21/20)}")
         else:
-            DeviceShell(f"input swipe 265 616 265 616 {SPLIT}")
+            DeviceShell(f"input swipe 500 610 500 400 {int(SPLIT*21/20)}")
             GoForward(time-SPLIT)
     def GoBack(time = 1000):
         SPLIT = 3000
         if time <= SPLIT:
-            DeviceShell(f"input swipe 263 800 263 800  {time}")
+            DeviceShell(f"input swipe 500 400 500 710 {int(time*31/30)}")
         else:
-            DeviceShell(f"input swipe 263 800 263 800  {SPLIT}")
+            DeviceShell(f"input swipe 500 400 500 710 {int(SPLIT*31/30)}")
             GoBack(time-SPLIT)
     def Dodge(time = 1):
         for _ in range(time):
@@ -950,7 +951,7 @@ def Factory():
                 return False
             if abs(pos[0]-800) <= 10:
                 return True
-            DeviceShell(f"input swipe 800 450 {round((pos[0]-800)/3.5+800)} 450")
+            DeviceShell(f"input swipe 1200 225 {round((pos[0]-800)/3.5+1200)} 225")
             Sleep(0.5)
         return False
     def AUTOCalibration_P(tar_p, tar_s = None, roi = None):
@@ -979,7 +980,7 @@ def Factory():
                     return True
                 delta[0] = int(delta[0]/1.4)
                 delta[1] = int(delta[1]/2)
-                DeviceShell(f"input swipe 800 450 {delta[0]+800} {delta[1]+450}")
+                DeviceShell(f"input swipe 1200 225 {delta[0]+1200} {delta[1]+225}")
                 Sleep(0.5)
         return False
     ##################################################################
@@ -1220,9 +1221,6 @@ def Factory():
                 if TryQuickUnlock():
                     GoLeft(4700)
                     GoBack(2000)
-                    DeviceShell("input swipe 800 450 800 850 500")
-                    DeviceShell("input swipe 800 450 800 850 500")
-                    DeviceShell("input swipe 800 450 800 850 500")
                     return True
                 return False
             case "武器突破60" | "武器突破70":
@@ -1306,7 +1304,7 @@ def Factory():
                     ResetPosition()
                     if not CheckIf(ScreenShot(), "操作_营救"):
                         return
-                    DeviceShell("input swipe 800 450 1083 450 500")
+                    DeviceShell("input swipe 800 225 1083 225 500")
                     if not AUTOCalibration_P([983,450], "操作_营救"):
                         return False
                     GoForward(5000)
@@ -1318,10 +1316,10 @@ def Factory():
                     if not TryQuickUnlock(5, GoForward, 100):
                         return False
                     
-                    DeviceShell("input swipe 800 450 750 450 500")
+                    DeviceShell("input swipe 800 225 750 225 500")
                     AUTOCalibration_P([736,389],None,[[575,335,264,443]])
                     GoForward(9000)
-                    DeviceShell("input swipe 800 450 1300 450 500")
+                    DeviceShell("input swipe 800 225 1300 225 500")
                     AUTOCalibration_P([800,450],None,[[597,213,344,380]])
                     GoForward(2000)
                     if not TryQuickUnlock(5, GoForward, 100):
@@ -1329,7 +1327,7 @@ def Factory():
                     Sleep(2)
                     if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                         logger.info("人质已救出!")
-                        DeviceShell(f"input swipe 800 450 {1600-1528} 450 500")
+                        DeviceShell(f"input swipe 800 225 {1600-1528} 225 500")
                         if not AUTOCalibration_P([865,450]):
                             return False
                         GoForward(5500)
@@ -1340,9 +1338,9 @@ def Factory():
                         Sleep(1)
                         return finalRoom()
 
-                    DeviceShell("input swipe 800 450 1528 450 500")
-                    DeviceShell("input swipe 800 450 1528 450 500")
-                    DeviceShell("input swipe 800 450 1100 450 500")
+                    DeviceShell("input swipe 800 225 1528 225 500")
+                    DeviceShell("input swipe 800 225 1528 225 500")
+                    DeviceShell("input swipe 800 225 1100 225 500")
                     if not AUTOCalibration_P([800,450], None,[[567,226,317,409]]):
                         return False
                     GoForward(7000)
@@ -1350,7 +1348,7 @@ def Factory():
                         return False
                     if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                         logger.info("人质已救出!")
-                        DeviceShell("input swipe 800 450 1528 450 500")
+                        DeviceShell("input swipe 800 225 1528 225 500")
                         GoRight(2000)
                         if not AUTOCalibration_P([800,500]):
                             return False
@@ -1359,11 +1357,11 @@ def Factory():
                         return finalRoom()
 
                     GoBack(7000)
-                    DeviceShell("input swipe 800 450 1200 450 500")
+                    DeviceShell("input swipe 800 225 1200 225 500")
                     if not AUTOCalibration_P([985,440], None,[[640,241,660,450]]):
                         return False
                     GoForward(7000)
-                    DeviceShell("input swipe 800 450 1190 450 500")
+                    DeviceShell("input swipe 800 225 1190 225 500")
                     if not AUTOCalibration_P([800,450], None,[[640,241,437,450]]):
                         return False
                     GoForward(2500)
@@ -1382,7 +1380,7 @@ def Factory():
                     
                     logger.info("第四个房间")
                     if setting._FARM_TYPE+setting._FARM_LVL == "mod强化60(测试)":
-                        DeviceShell("input swipe 1528 450 600 450 500")
+                        DeviceShell("input swipe 1528 225 600 225 500")
                         AUTOCalibration_P([800,450])
                         GoLeft(2300)
                         GoForward(2000)
@@ -1391,7 +1389,7 @@ def Factory():
                         AUTOCalibration_P([800,595])
                         CastSpearRush(2,True)
                         GoBack(500)
-                        DeviceShell("input swipe 1528 450 800 450 500")
+                        DeviceShell("input swipe 1528 225 800 225 500")
                         AUTOCalibration_P([730,450])
                         if not TryQuickUnlock(5, GoForward, 100):
                             return False
@@ -1446,7 +1444,7 @@ def Factory():
                     CastSpearRush(2)
                     return saveVIP()
                 elif CheckIf(scn,"保护目标", [[1095-50,431-50,100,100]]):
-                    DeviceShell("input swipe 800 450 1107 450 500")
+                    DeviceShell("input swipe 800 225 1107 225 500")
                     if CheckIf(ScreenShot(),"保护目标",[[620-50,431-50,100,100]]):
                         logger.info("左上")
                         if not AUTOCalibration_P([723,595]):
@@ -1470,8 +1468,16 @@ def Factory():
 
                 logger.info("不可用的第二个房间.")
                 return False
-            case "迷津测试":
+            case "迷津默认难度":
                 logger.info("不对, 你怎么能运行这个??")
+                return True
+            case "测试测试":
+                
+                GoForward(2000)
+                GoBack(2000)
+                GoLeft(2000)
+                GoRight(2000)
+                             
                 return True
             case _ :
                 logger.info("没有设定开场移动. 原地挂机.")
@@ -1749,8 +1755,8 @@ def Factory():
                     GoForward(11000)
                 if runtimeContext._ROUGE_tick_counter % 7 == 0:
                     Press([1097,658])
-                    DeviceShell(f"input swipe 800 0 800 800 500")
-                    DeviceShell(f"input swipe 800 450 800 200 500")
+                    DeviceShell(f"input swipe 1200 0 1200 800 500")
+                    DeviceShell(f"input swipe 1200 450 1200 200 500")
                 if runtimeContext._ROUGE_tick_counter % 3 == 0:
                     Press([1086,797])
                 else:
