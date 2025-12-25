@@ -783,6 +783,7 @@ def Factory():
             logger.info(e)
             return False
     def GoLeft(time = 1000):
+        # logger.info(f"往左走 剩余{time}")
         SPLIT = 3000
         if time <= SPLIT:
             DeviceShell(f"input swipe 560 550 50 550 {int(1.02*time)}")
@@ -796,6 +797,7 @@ def Factory():
         Press([1359,478])
 
     def GoRight(time = 1000):
+        # logger.info(f"往右走 剩余{time}")
         SPLIT = 3000
         if time <= SPLIT:
             DeviceShell(f"input swipe 50 550 560 550 {int(1.02*time)}")
@@ -803,6 +805,7 @@ def Factory():
             DeviceShell(f"input swipe 50 550 560 550 {int(1.02*SPLIT)}")
             GoRight(time-SPLIT)
     def GoForward(time = 1000):
+        # logger.info(f"往前走 剩余{time}")
         SPLIT = 3000
         if time <= SPLIT:
             DeviceShell(f"input swipe 500 610 500 400 {int(time*21/20)}")
@@ -810,6 +813,7 @@ def Factory():
             DeviceShell(f"input swipe 500 610 500 400 {int(SPLIT*21/20)}")
             GoForward(time-SPLIT)
     def GoBack(time = 1000):
+        # logger.info(f"往后走 剩余{time}")
         SPLIT = 3000
         if time <= SPLIT:
             DeviceShell(f"input swipe 500 400 500 710 {int(time*31/30)}")
@@ -818,7 +822,7 @@ def Factory():
             GoBack(time-SPLIT)
     def Dodge(time = 1):
         for _ in range(time):
-            Press([1518,631])
+            Press([1500,582])
             Sleep(1)
     def QuitDungeon():
         runtimeContext._GAME_COUNTER -= 1 # 因为退出流程后我们会看见再次挑战, 看见再次挑战会加1, 所以我们提前扣掉这一次.
@@ -1038,7 +1042,9 @@ def Factory():
 
     def resetMove():
         match setting._FARM_TYPE+setting._FARM_LVL:
-            case "夜航手册40" | "夜航手册55" | "夜航手册60":
+            case "夜航手册40":
+                return True
+            case "夜航手册55" | "夜航手册60":
                 GoForward(15000)
                 GoBack(1000)
                 GoLeft(100)
@@ -1070,6 +1076,7 @@ def Factory():
                     Dodge(3)
                     GoRight(3000)
                     GoForward(16000)
+                    Sleep(0.5)
                     GoLeft(2500)
                     GoForward(13000)
 
@@ -1099,6 +1106,7 @@ def Factory():
                     GoBack(1000)
                     GoLeft(6000)
                     GoForward(11300)
+                    Sleep(0.5)
                     GoLeft(6000)
                     DoubleJump()
                     GoLeft(3000)
@@ -1114,6 +1122,7 @@ def Factory():
                 GoBack(1000)
                 GoLeft(6000)
                 GoForward(11300)
+                Sleep(0.5)
                 GoLeft(6000)
                 DoubleJump()
                 GoLeft(3000)
@@ -1157,6 +1166,7 @@ def Factory():
             case "角色经验50":
                 if CheckIf(ScreenShot(), "保护目标", [[693,212,109,110]]):
                     GoForward(9600)
+                    Sleep(0.5)
                     GoLeft(400)
                     if TryQuickUnlock():
                         GoRight(3250)
@@ -1473,10 +1483,11 @@ def Factory():
                 return True
             case "测试测试":
                 
-                GoForward(2000)
-                GoBack(2000)
-                GoLeft(2000)
-                GoRight(2000)
+                GoForward(11300)
+                GoLeft(500)
+                GoLeft(500)
+                GoLeft(500)
+                GoLeft(500)
                              
                 return True
             case _ :
@@ -1856,7 +1867,7 @@ def Factory():
             Press([800,858])
             return False
         ########################################
-        if setting._FARM_TYPE+setting._FARM_LVL == "迷津测试":
+        if setting._FARM_TYPE == "迷津":
             logger.info("使用肉鸽模式.")
             active_handlers = handlers_rouge
         else:
