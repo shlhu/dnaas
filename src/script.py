@@ -1076,7 +1076,7 @@ def Factory():
                     Dodge(3)
                     GoRight(3000)
                     GoForward(16000)
-                    Sleep(0.5)
+                    Sleep(2)
                     GoLeft(2500)
                     GoForward(13000)
 
@@ -1106,7 +1106,7 @@ def Factory():
                     GoBack(1000)
                     GoLeft(6000)
                     GoForward(11300)
-                    Sleep(0.5)
+                    Sleep(2)
                     GoLeft(6000)
                     DoubleJump()
                     GoLeft(3000)
@@ -1122,7 +1122,7 @@ def Factory():
                 GoBack(1000)
                 GoLeft(6000)
                 GoForward(11300)
-                Sleep(0.5)
+                Sleep(2)
                 GoLeft(6000)
                 DoubleJump()
                 GoLeft(3000)
@@ -1166,7 +1166,7 @@ def Factory():
             case "角色经验50":
                 if CheckIf(ScreenShot(), "保护目标", [[693,212,109,110]]):
                     GoForward(9600)
-                    Sleep(0.5)
+                    Sleep(2)
                     GoLeft(400)
                     if TryQuickUnlock():
                         GoRight(3250)
