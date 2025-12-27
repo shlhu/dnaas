@@ -786,9 +786,9 @@ def Factory():
         # logger.info(f"往左走 剩余{time}")
         SPLIT = 3000
         if time <= SPLIT:
-            DeviceShell(f"input swipe 560 550 50 550 {int(1.02*time)}")
+            DeviceShell(f"input swipe 460 550 50 550 {int(time*41/40)}")
         else:
-            DeviceShell(f"input swipe 560 550 50 550 {int(1.02*SPLIT)}")
+            DeviceShell(f"input swipe 460 550 50 550 {int(SPLIT*41/40)}")
             GoLeft(time-SPLIT)
 
     def DoubleJump():
@@ -1076,7 +1076,6 @@ def Factory():
                     Dodge(3)
                     GoRight(3000)
                     GoForward(16000)
-                    Sleep(2)
                     GoLeft(2500)
                     GoForward(13000)
 
@@ -1106,7 +1105,6 @@ def Factory():
                     GoBack(1000)
                     GoLeft(6000)
                     GoForward(11300)
-                    Sleep(2)
                     GoLeft(6000)
                     DoubleJump()
                     GoLeft(3000)
@@ -1122,7 +1120,6 @@ def Factory():
                 GoBack(1000)
                 GoLeft(6000)
                 GoForward(11300)
-                Sleep(2)
                 GoLeft(6000)
                 DoubleJump()
                 GoLeft(3000)
@@ -1166,7 +1163,6 @@ def Factory():
             case "角色经验50":
                 if CheckIf(ScreenShot(), "保护目标", [[693,212,109,110]]):
                     GoForward(9600)
-                    Sleep(2)
                     GoLeft(400)
                     if TryQuickUnlock():
                         GoRight(3250)
@@ -1318,13 +1314,14 @@ def Factory():
                     if not AUTOCalibration_P([983,450], "操作_营救"):
                         return False
                     GoForward(5000)
+                    Sleep(2)
                     DoubleJump()
                     GoForward(2000)
                     if not AUTOCalibration_P([800,450], "操作_营救"):
                         return False
                     GoForward(1000)
                     if not TryQuickUnlock(5, GoForward, 100):
-                        return False
+                        pass
                     
                     DeviceShell("input swipe 800 225 750 225 500")
                     AUTOCalibration_P([736,389],None,[[575,335,264,443]])
@@ -1333,7 +1330,7 @@ def Factory():
                     AUTOCalibration_P([800,450],None,[[597,213,344,380]])
                     GoForward(2000)
                     if not TryQuickUnlock(5, GoForward, 100):
-                        return False
+                        pass
                     Sleep(2)
                     if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                         logger.info("人质已救出!")
@@ -1355,7 +1352,7 @@ def Factory():
                         return False
                     GoForward(7000)
                     if not TryQuickUnlock(5, GoForward, 100):
-                        return False
+                        pass
                     if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                         logger.info("人质已救出!")
                         DeviceShell("input swipe 800 225 1528 225 500")
@@ -1376,7 +1373,7 @@ def Factory():
                         return False
                     GoForward(2500)
                     if not TryQuickUnlock(5, GoForward, 100):
-                        return False
+                        pass
                     Sleep(2)
                     if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                         logger.info("人质已救出!")
@@ -1402,7 +1399,7 @@ def Factory():
                         DeviceShell("input swipe 1528 225 800 225 500")
                         AUTOCalibration_P([730,450])
                         if not TryQuickUnlock(5, GoForward, 100):
-                            return False
+                            pass
                         Sleep(2)
                         if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                             logger.info("人质已救出!")
@@ -1546,6 +1543,13 @@ def Factory():
             if Press(CheckIf(scn, "点击进入游戏")) or Press(CheckIf(scn, "点击进入游戏_云")):
                 logger.info("点击进入游戏.")
                 Sleep(20)
+                return True
+            return False
+        @register()
+        def handle_close_annu(scn):
+            if Press(CheckIf(scn, "关闭公告")):
+                logger.info("关闭公告.")
+                Sleep(1)
                 return True
             return False
         @register('normal')
@@ -1758,7 +1762,7 @@ def Factory():
                 return True
         @register('rouge')
         def handle_rouge_battle(scn):
-            if CheckIf(scn, "肉鸽_战斗", [[1318,69,231,72]]):
+            if CheckIf(scn, "肉鸽_战斗", [[34,241,279,141]]):
                 runtimeContext._ROUGE_battle_finished = False
                 runtimeContext._ROUGE_tick_counter += 1
                 if CheckIf(scn,"保护目标", [[522,337,201,144]]):
@@ -1784,12 +1788,12 @@ def Factory():
             return False
         @register('rouge')
         def handle_rouge_explore(scn):
-            if CheckIf(scn, "肉鸽_继续探索", [[1370,62,195,59]]):
+            if CheckIf(scn, "肉鸽_继续探索", [[34,241,279,141]]):
                 runtimeContext._ROUGE_tick_counter+=1
                 if not runtimeContext._ROUGE_battle_finished:
                     Sleep(2)
                     scn = ScreenShot()
-                    if CheckIf(scn, "肉鸽_继续探索", [[1370,62,195,59]]):
+                    if CheckIf(scn, "肉鸽_继续探索", [[34,241,279,141]]):
                         runtimeContext._ROUGE_battle_finished = True
                 elif runtimeContext._ROUGE_battle_finished:
                     if not runtimeContext._ROUGE_new_battle_reset:
@@ -1821,7 +1825,7 @@ def Factory():
 
             if Press(CheckIf(scn,"肉鸽_休整按钮")):
                 return True
-            if CheckIf(scn, "肉鸽_休整", [[1370,62,195,59]]):
+            if CheckIf(scn, "肉鸽_休整", [[34,241,279,141]]):
                 if not locals_dict['_has_forwarded']:
                     GoForward(5000)
                     locals_dict['_has_forwarded'] = True
