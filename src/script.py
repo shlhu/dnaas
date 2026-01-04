@@ -39,7 +39,7 @@ CONFIG_VAR_LIST = [
             ["adb_port_var",                tk.StringVar,  "_ADBPORT",                   16384],
             ["last_version",                tk.StringVar,  "LAST_VERSION",               ""],
             ["latest_version",              tk.StringVar,  "LATEST_VERSION",             None],
-
+            ["low_fps_var",                 tk.BooleanVar, "_LOW_FPS",                   False],
             ["cast_e_var",                  tk.BooleanVar, "_CAST_E_ABILITY",            True],
             ["cast_intervel_var",           tk.IntVar,     "_CAST_E_INTERVAL",           7],
             ["restart_intervel_var",        tk.IntVar,     "_RESTART_INTERVAL",          2000],
@@ -955,7 +955,7 @@ def Factory():
                 return False
             if abs(pos[0]-800) <= 10:
                 return True
-            DeviceShell(f"input swipe 1200 225 {round((pos[0]-800)/7+1200)} 225")
+            DeviceShell(f"input swipe 1200 225 {round((pos[0]-800)/(3.5*setting._FPS_ADJUSTER)+1200)} 225")
             Sleep(0.5)
         return False
     def AUTOCalibration_P(tar_p, tar_s = None, roi = None):
@@ -980,11 +980,11 @@ def Factory():
                 pos = CheckIf(scn,tar_s,roi)
             if pos:
                 delta = [round((pos[0]-tar_p[0])), round((pos[1]-tar_p[1]))]
-                if (abs(delta[0]) <= 7) and (abs(delta[1]) <= 7):
+                if (abs(delta[0]) <= 3+setting._FPS_ADJUSTER*2) and (abs(delta[1]) <= 3+setting._FPS_ADJUSTER*2):
                     return True
                 delta[0] = int(delta[0]/1.4)
                 delta[1] = int(delta[1]/2)
-                DeviceShell(f"input swipe 1200 225 {delta[0]//2+1200} {delta[1]//2+225} 2000")
+                DeviceShell(f"input swipe 1200 225 {delta[0]//setting._FPS_ADJUSTER+1200} {delta[1]//setting._FPS_ADJUSTER+225} {1500*setting._FPS_ADJUSTER-1000}")
                 Sleep(0.5)
         return False
     ##################################################################
@@ -1160,6 +1160,20 @@ def Factory():
                         GoForward(round((15+54/60)*1000))
                         return True
                     return False
+            case "夜航手册80":
+                if int(setting._FARM_EXTRA) not in [1,4,5]:
+                    logger.info("暂不支持的mod额外参数. 当前仅支持1,4,5.")
+                    return False
+                if int(setting._FARM_EXTRA) == 1:
+                    return True
+                if int(setting._FARM_EXTRA) == 4:
+                    GoForward(14000)
+                    return True
+                if int(setting._FARM_EXTRA) == 5:
+                    AUTOCalibration_P([800,450])
+                    GoForward(15000)
+                    return True
+
             case "角色经验50":
                 if CheckIf(ScreenShot(), "保护目标", [[693,212,109,110]]):
                     GoForward(9600)
@@ -1280,7 +1294,7 @@ def Factory():
                                 GoRight(round((9-14/60)*1000))
                                 continue
                             if k == 'B':
-                                GoForward(1000)
+                                GoForward(1300)
                                 GoRight(round((14-56/60)*1000))
                                 GoForward(round((6+24/60)*1000))
                                 GoLeft(round((4-54/60)*1000))
@@ -1310,7 +1324,7 @@ def Factory():
                     ResetPosition()
                     if not CheckIf(ScreenShot(), "操作_营救"):
                         return
-                    DeviceShell(f"input swipe 800 225 {(1083-800)//2+800} 225 500")
+                    DeviceShell(f"input swipe 800 225 {(1083-800)//setting._FPS_ADJUSTER+800} 225 500")
                     if not AUTOCalibration_P([983,450], "操作_营救"):
                         return False
                     GoForward(5000)
@@ -1323,10 +1337,10 @@ def Factory():
                     if not TryQuickUnlock(5, GoForward, 100):
                         pass
                     
-                    DeviceShell(f"input swipe 800 225 {(750-800)//2+800} 225 500")
+                    DeviceShell(f"input swipe 800 225 {(750-800)//setting._FPS_ADJUSTER+800} 225 500")
                     AUTOCalibration_P([736,389],None,[[575,335,264,443]])
                     GoForward(9000)
-                    DeviceShell(f"input swipe 800 225 {(1300-800)//2+800} 225 500")
+                    DeviceShell(f"input swipe 800 225 {(1300-800)//setting._FPS_ADJUSTER+800} 225 500")
                     AUTOCalibration_P([800,450],None,[[597,213,344,380]])
                     GoForward(2000)
                     if not TryQuickUnlock(5, GoForward, 100):
@@ -1334,7 +1348,7 @@ def Factory():
                     Sleep(2)
                     if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                         logger.info("人质已救出!")
-                        DeviceShell(f"input swipe 800 225 436 225 500")
+                        DeviceShell(f"input swipe 800 225 {(800-728/setting._FPS_ADJUSTER)} 225 500")
                         if not AUTOCalibration_P([865,450]):
                             return False
                         GoForward(5500)
@@ -1345,9 +1359,9 @@ def Factory():
                         Sleep(1)
                         return finalRoom()
 
-                    DeviceShell(f"input swipe 800 225 {(1528-800)//2+800} 225 500")
-                    DeviceShell(f"input swipe 800 225 {(1528-800)//2+800} 225 500")
-                    DeviceShell(f"input swipe 800 225 {(1100-800)//2+800} 225 500")
+                    DeviceShell(f"input swipe 800 225 {(1528-800)//setting._FPS_ADJUSTER+800} 225 500")
+                    DeviceShell(f"input swipe 800 225 {(1528-800)//setting._FPS_ADJUSTER+800} 225 500")
+                    DeviceShell(f"input swipe 800 225 {(1100-800)//setting._FPS_ADJUSTER+800} 225 500")
                     if not AUTOCalibration_P([800,450], None,[[567,226,317,409]]):
                         return False
                     GoForward(7000)
@@ -1355,7 +1369,7 @@ def Factory():
                         pass
                     if CheckIf(ScreenShot(),"护送目标前往撤离点"):
                         logger.info("人质已救出!")
-                        DeviceShell(f"input swipe 800 225 {(1528-800)//2+800} 225 500")
+                        DeviceShell(f"input swipe 800 225 {(1528-800)//setting._FPS_ADJUSTER+800} 225 500")
                         GoRight(2000)
                         if not AUTOCalibration_P([800,500]):
                             return False
@@ -1364,11 +1378,11 @@ def Factory():
                         return finalRoom()
 
                     GoBack(7000)
-                    DeviceShell(f"input swipe 800 225 {(1200-800)//2+800} 225 500")
+                    DeviceShell(f"input swipe 800 225 {(1200-800)//setting._FPS_ADJUSTER+800} 225 500")
                     if not AUTOCalibration_P([985,440], None,[[640,241,660,450]]):
                         return False
                     GoForward(7000)
-                    DeviceShell(f"input swipe 800 225 {(1190-800)//2+800} 225 500")
+                    DeviceShell(f"input swipe 800 225 {(1190-800)//setting._FPS_ADJUSTER+800} 225 500")
                     if not AUTOCalibration_P([800,450], None,[[640,241,437,450]]):
                         return False
                     GoForward(2500)
@@ -1387,7 +1401,7 @@ def Factory():
                     
                     logger.info("第四个房间")
                     if setting._FARM_TYPE+setting._FARM_LVL == "mod强化60(测试)":
-                        DeviceShell(f"input swipe {(1528-800)//2+800} 225 600 225 500")
+                        DeviceShell(f"input swipe {(1528-800)//setting._FPS_ADJUSTER+800} 225 600 225 500")
                         AUTOCalibration_P([800,450])
                         GoLeft(2300)
                         GoForward(2000)
@@ -1396,7 +1410,7 @@ def Factory():
                         AUTOCalibration_P([800,595])
                         CastSpearRush(2,True)
                         GoBack(500)
-                        DeviceShell(f"input swipe {(1528-800)//2+800} 225 800 225 500")
+                        DeviceShell(f"input swipe {(1528-800)//setting._FPS_ADJUSTER+800} 225 800 225 500")
                         AUTOCalibration_P([730,450])
                         if not TryQuickUnlock(5, GoForward, 100):
                             pass
@@ -1498,6 +1512,11 @@ def Factory():
         runtimeContext._IN_GAME_COUNTER = 1
         runtimeContext._GAME_COUNTER = 0
         runtimeContext._GAME_PREPARE = False
+
+        if setting._LOW_FPS:
+            setting._FPS_ADJUSTER = 2
+        else:
+            setting._FPS_ADJUSTER = 1
 
         if (setting._FARM_TYPE not in DUNGEON_TARGETS.keys()) or (setting._FARM_LVL not in DUNGEON_TARGETS[setting._FARM_TYPE].keys()):
             logger.info("\n\n任务列表已更新! 请重新手动选择地下城任务!\n\n")
@@ -1771,7 +1790,7 @@ def Factory():
                 if runtimeContext._ROUGE_tick_counter % 7 == 0:
                     Press([1097,658])
                     DeviceShell(f"input swipe 1200 0 1200 800 500")
-                    DeviceShell(f"input swipe 1200 450 1200 325 500")
+                    DeviceShell(f"input swipe 1200 450 1200 {450-250//setting._FPS_ADJUSTER} 500")
                 if runtimeContext._ROUGE_tick_counter % 3 == 0:
                     Press([1086,797])
                 else:

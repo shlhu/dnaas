@@ -153,6 +153,17 @@ class ConfigPanelApp(tk.Toplevel):
             )
         self.button_save_adb_port.grid(row=0, column=4)
 
+
+        row_counter += 1
+        self.low_fps_check = ttk.Checkbutton(
+            self.main_frame,
+            variable=self.low_fps_var,
+            text="兼容模式: 云游戏30帧",
+            command=checkcommand,
+            style="Custom.TCheckbutton"
+            )
+        self.low_fps_check.grid(row=row_counter, column=0, sticky='ew')
+
         # 分割线.
         row_counter += 1
         ttk.Separator(self.main_frame, orient='horizontal').grid(row=row_counter, column=0, columnspan=3, sticky='ew', pady=10)
@@ -434,6 +445,7 @@ class ConfigPanelApp(tk.Toplevel):
     def set_controls_state(self, state):
         self.button_and_entry = [
             self.adb_path_change_button,
+            self.low_fps_check,
             self.adb_port_entry,
             self.button_save_adb_port,
             self.cast_E_check,
