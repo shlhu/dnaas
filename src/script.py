@@ -1161,10 +1161,14 @@ def Factory():
                         return True
                     return False
             case "夜航手册80":
-                if int(setting._FARM_EXTRA) not in [1,4,5]:
-                    logger.info("暂不支持的mod额外参数. 当前仅支持1,4,5.")
+                if (setting._FARM_EXTRA == "无关心") or (int(setting._FARM_EXTRA) not in [1,2,3,4,5]) :
+                    logger.info("暂不支持的mod额外参数. 当前仅支持1,2,3,4,5.")
                     return False
                 if int(setting._FARM_EXTRA) == 1:
+                    return True
+                if int(setting._FARM_EXTRA) == 2:
+                    return True
+                if int(setting._FARM_EXTRA) == 3:
                     return True
                 if int(setting._FARM_EXTRA) == 4:
                     GoForward(14000)
